@@ -1,0 +1,40 @@
+export interface User {
+  id: string;
+  email: string;
+  plan: 'free' | 'pro';
+  created_at: string;
+}
+
+export interface Collection {
+  id: string;
+  user_id: string;
+  name: string;
+  type: 'topic' | 'project';
+  description: string | null;
+  ai_summary: string | null;
+  ai_conclusions: ThreadTweet[] | null;
+  summary_updated_at: string | null;
+  tweet_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Tweet {
+  id: string;
+  user_id: string;
+  collection_id: string | null;
+  tweet_url: string;
+  author_handle: string;
+  author_name: string | null;
+  content: string;
+  thread_content: ThreadTweet[] | null;
+  ai_summary: string | null;
+  tweet_date: string | null;
+  captured_at: string;
+}
+
+export interface ThreadTweet {
+  author_handle: string;
+  content: string;
+  position: number;
+}
