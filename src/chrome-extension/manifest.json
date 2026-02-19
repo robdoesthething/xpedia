@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Xpedia — Tweet Corpus Builder",
+  "version": "0.1.0",
+  "description": "Capture your X bookmarks into a structured knowledge corpus.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["https://x.com/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/i/bookmarks*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Xpedia"
+  },
+  "icons": {}
+}

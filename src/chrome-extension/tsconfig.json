@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "outDir": "../../dist/chrome-extension",
+    "rootDir": ".",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["chrome"]
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      color: #1a1a1a;
+      padding: 20px;
+    }
+    h1 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    label { display: block; font-size: 12px; font-weight: 500; color: #666; margin-bottom: 4px; }
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+    input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+    button {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-primary { background: #1a1a1a; color: #fff; }
+    .btn-primary:hover { background: #333; }
+    .btn-secondary { background: #f3f4f6; color: #374151; margin-top: 8px; }
+    .btn-secondary:hover { background: #e5e7eb; }
+    .error { color: #ef4444; font-size: 12px; margin-bottom: 8px; }
+    .status { font-size: 13px; color: #666; margin-top: 8px; }
+    .email { font-weight: 600; color: #1a1a1a; }
+    #login-view, #logged-in-view { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Xpedia</h1>
+
+  <div id="login-view">
+    <label for="email">Email</label>
+    <input type="email" id="email" placeholder="you@example.com">
+    <label for="password">Password</label>
+    <input type="password" id="password" placeholder="Password">
+    <div id="error" class="error"></div>
+    <button id="sign-in-btn" class="btn-primary">Sign In</button>
+  </div>
+
+  <div id="logged-in-view">
+    <p>Signed in as <span id="user-email" class="email"></span></p>
+    <p class="status">Navigate to <strong>x.com/i/bookmarks</strong> to capture tweets.</p>
+    <button id="sign-out-btn" class="btn-secondary">Sign Out</button>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>
