@@ -38,3 +38,12 @@ export interface ThreadTweet {
   content: string;
   position: number;
 }
+
+/** Shape sent by the Chrome extension when capturing tweets. */
+export interface CapturedTweet {
+  tweet_url: string;
+  author_handle: string;
+  author_name: string | null;
+  content: string;
+  tweet_date: string | null;
+}
