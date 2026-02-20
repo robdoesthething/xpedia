@@ -12,9 +12,12 @@ export default function DashboardTabs() {
   const pathname = usePathname();
 
   return (
-    <div className="flex gap-6 border-b border-gray-200 bg-white px-6">
+    <div className="flex gap-6">
       {tabs.map((tab) => {
-        const isActive = tab.href === '/dashboard' ? pathname === tab.href : pathname.startsWith(tab.href);
+        const isActive =
+          tab.href === '/dashboard'
+            ? pathname === '/dashboard' || pathname.startsWith('/dashboard/collection/')
+            : pathname.startsWith(tab.href);
 
         return (
           <Link

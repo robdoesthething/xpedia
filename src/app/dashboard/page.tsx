@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import CollectionCard from '@/components/CollectionCard';
+import NewCollectionButton from '@/components/NewCollectionButton';
 import type { Collection } from '@/types/database';
 
 export default async function DashboardPage() {
@@ -19,13 +20,19 @@ export default async function DashboardPage() {
           Install the Chrome extension and capture your first bookmarks. They&apos;ll be
           automatically organized into collections here.
         </p>
+        <div className="mt-6">
+          <NewCollectionButton />
+        </div>
       </div>
     );
   }
 
   return (
     <div>
-      <h2 className="mb-6 text-xl font-semibold text-gray-900">Your Collections</h2>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-gray-900">Your Collections</h2>
+        <NewCollectionButton />
+      </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {collections.map((collection) => (
           <CollectionCard key={collection.id} collection={collection} />

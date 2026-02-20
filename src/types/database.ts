@@ -12,7 +12,7 @@ export interface Collection {
   type: 'topic' | 'project';
   description: string | null;
   ai_summary: string | null;
-  ai_conclusions: ThreadTweet[] | null;
+  ai_conclusions: string[] | null;
   summary_updated_at: string | null;
   tweet_count: number;
   created_at: string;
