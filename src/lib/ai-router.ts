@@ -99,6 +99,9 @@ async function callWithRotation(
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.warn(`[AI] ${provider.name} failed: ${msg}`);
+      if (err instanceof RateLimitError) {
+        logAiCall({ provider: provider.name, operation: 'rate_limited', tokensIn: 0, tokensOut: 0 });
+      }
     }
   }
 
