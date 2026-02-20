@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default async function LandingPage() {
   const supabase = await createClient();
@@ -16,12 +17,15 @@ export default async function LandingPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-8 py-6">
         <span className="font-mono text-sm tracking-widest text-mist uppercase">Xpedia</span>
-        <Link
-          href={ctaHref}
-          className="font-mono text-xs tracking-widest text-gold uppercase hover:text-gold-bright transition-colors"
-        >
-          {user ? 'Dashboard →' : 'Sign in →'}
-        </Link>
+        <div className="flex items-center gap-6">
+          <ThemeToggle />
+          <Link
+            href={ctaHref}
+            className="font-mono text-xs tracking-widest text-gold uppercase hover:text-gold-bright transition-colors"
+          >
+            {user ? 'Dashboard →' : 'Sign in →'}
+          </Link>
+        </div>
       </nav>
 
       {/* Hero */}

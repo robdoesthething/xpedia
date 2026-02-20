@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function Navbar() {
   const router = useRouter();
@@ -18,8 +19,9 @@ export default function Navbar() {
   return (
     <nav className="flex items-center justify-between border-b border-seam bg-ink px-6 py-4">
       <span className="font-mono text-sm tracking-widest text-gold uppercase">Xpedia</span>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-5">
         {user && <span className="font-mono text-xs text-shadow">{user.email}</span>}
+        <ThemeToggle />
         <button
           onClick={handleSignOut}
           className="font-mono text-xs tracking-widest text-mist uppercase hover:text-parchment transition-colors"

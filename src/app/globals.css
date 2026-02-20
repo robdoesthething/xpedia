@@ -6,19 +6,52 @@
   --font-sans:   var(--font-dm-sans), system-ui, sans-serif;
   --font-mono:   var(--font-jetbrains), 'Courier New', monospace;
 
-  /* Dark Archive palette */
-  --color-void:       #0c0b0a;
-  --color-ink:        #181614;
-  --color-quill:      #201d19;
-  --color-seam:       #2c2924;
-  --color-veil:       #3b3730;
+  /*
+   * Semantic color tokens — reference CSS custom properties so that
+   * swapping :root vars is all it takes to switch between light and dark.
+   */
+  --color-void:        var(--app-void);
+  --color-ink:         var(--app-ink);
+  --color-quill:       var(--app-quill);
+  --color-seam:        var(--app-seam);
+  --color-veil:        var(--app-veil);
+  --color-parchment:   var(--app-parchment);
+  --color-mist:        var(--app-mist);
+  --color-shadow:      var(--app-shadow);
+  --color-gold:        var(--app-gold);
+  --color-gold-bright: var(--app-gold-bright);
+}
 
-  --color-parchment:  #ede8de;
-  --color-mist:       #978f85;
-  --color-shadow:     #56514b;
+/* ── Light mode (default) ── */
+:root {
+  --app-void:        #f4efe6;   /* warm cream page bg          */
+  --app-ink:         #ffffff;   /* white card surface          */
+  --app-quill:       #f9f5ef;   /* hovered card surface        */
+  --app-seam:        #ddd5c8;   /* warm border                 */
+  --app-veil:        #cbc2b5;   /* stronger border / hover     */
 
-  --color-gold:       #c8892a;
-  --color-gold-bright:#dfa040;
+  --app-parchment:   #1a1714;   /* near-black primary text     */
+  --app-mist:        #4a4038;   /* warm dark grey secondary    */
+  --app-shadow:      #7a6e66;   /* medium warm grey tertiary   */
+
+  --app-gold:        #8a5f1a;   /* dark amber for text / icons */
+  --app-gold-bright: #9d6a1e;   /* hover                       */
+}
+
+/* ── Dark mode ── */
+.dark {
+  --app-void:        #0f0d0b;   /* near-black page bg          */
+  --app-ink:         #1c1916;   /* distinct dark card surface  */
+  --app-quill:       #252119;   /* hovered card surface        */
+  --app-seam:        #3d3730;   /* visible border              */
+  --app-veil:        #4e4840;   /* strong hover border         */
+
+  --app-parchment:   #f0ece2;   /* bright readable primary     */
+  --app-mist:        #c4bcb2;   /* good secondary contrast     */
+  --app-shadow:      #948880;   /* readable tertiary           */
+
+  --app-gold:        #c8892a;   /* vibrant amber               */
+  --app-gold-bright: #dfa040;   /* hover                       */
 }
 
 *, *::before, *::after {
@@ -31,27 +64,28 @@ html {
 }
 
 body {
-  background-color: #0c0b0a;
-  color: #ede8de;
+  background-color: var(--app-void);
+  color: var(--app-parchment);
   font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.6;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0c0b0a; }
-::-webkit-scrollbar-thumb { background: #2c2924; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #3b3730; }
+::-webkit-scrollbar-track { background: var(--app-void); }
+::-webkit-scrollbar-thumb { background: var(--app-seam); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--app-veil); }
 
 /* Focus ring */
 :focus-visible {
-  outline: 2px solid #c8892a;
+  outline: 2px solid var(--app-gold);
   outline-offset: 2px;
 }
 
 /* Selection */
 ::selection {
-  background: #c8892a33;
-  color: #ede8de;
+  background: color-mix(in srgb, var(--app-gold) 20%, transparent);
+  color: var(--app-parchment);
 }
