@@ -112,12 +112,18 @@ export const aiRouter = {
     const messages: ChatMessage[] = [
       {
         role: 'system',
-        content: `You categorize tweets into topic collections and write one-line summaries.
+        content: `You categorize tweets into specific, actionable collections and write sharp one-line summaries.
 
 Rules:
 - Prefer assigning to an existing collection if the tweet fits.
-- Only create a new collection if no existing one fits. New names should be short (2-4 words), title-cased topic labels (e.g. "Software Architecture", "AI Research", "Startup Advice").
-- The summary should be one concise sentence capturing the tweet's key insight.
+- Only create a new collection if no existing one fits.
+- Collection names must be SPECIFIC and ACTIONABLE — not vague categories.
+  GOOD: "Pricing Strategy Tactics", "React Performance Patterns", "Cold Email Templates", "Fundraising Pitch Tips", "SQL Query Optimization"
+  BAD: "Tech", "Business", "Programming", "Interesting Thoughts", "General Advice"
+- Names should be 2-5 words, title-cased, and describe a skill or knowledge area someone would actively study.
+- The summary must capture the SPECIFIC actionable insight, not just restate the topic.
+  GOOD: "Use tiered pricing anchored to a decoy option to increase average deal size by 20-30%"
+  BAD: "A tweet about pricing strategies"
 
 ${collectionsContext}
 
@@ -129,7 +135,7 @@ Respond with ONLY valid JSON: {"collection_name": "...", "summary": "..."}`,
       },
     ];
 
-    const result = await callWithRotation(CATEGORIZATION_PROVIDERS, messages, 150);
+    const result = await callWithRotation(CATEGORIZATION_PROVIDERS, messages, 200);
     if (!result) return null;
 
     try {
@@ -163,9 +169,15 @@ Respond with ONLY valid JSON: {"collection_name": "...", "summary": "..."}`,
     const messages: ChatMessage[] = [
       {
         role: 'system',
-        content: `You write concise, insightful summaries for topic collections of curated tweets.
+        content: `You write concise, actionable knowledge summaries from curated tweet collections.
 
-Write a 2-4 paragraph summary that synthesizes the key themes and insights across all tweets in the "${collectionName}" collection. Focus on recurring patterns, consensus views, and notable contrarian takes. Do not list individual tweets — synthesize.`,
+Write a 2-4 paragraph summary for the "${collectionName}" collection that someone could use as a reference guide. Focus on:
+- Specific techniques, frameworks, or mental models mentioned across tweets
+- Concrete numbers, benchmarks, or thresholds people cite
+- Points of consensus vs. notable contrarian views
+- What practitioners actually DO vs. what they say in theory
+
+Do NOT list individual tweets. Synthesize into a cohesive knowledge brief that reads like a practitioner's field notes.`,
       },
       {
         role: 'user',
@@ -192,9 +204,17 @@ Write a 2-4 paragraph summary that synthesizes the key themes and insights acros
     const messages: ChatMessage[] = [
       {
         role: 'system',
-        content: `You extract actionable conclusions from curated tweet collections.
+        content: `You extract specific, actionable conclusions from curated tweet collections.
 
-Given tweets in the "${collectionName}" collection, produce 3-7 actionable conclusions. Each should be a concrete, practical takeaway someone can act on. Return ONLY a JSON array of strings: ["conclusion 1", "conclusion 2", ...]`,
+Given tweets in the "${collectionName}" collection, produce 3-7 conclusions. Each MUST be:
+- A specific action someone can take THIS WEEK (not vague advice)
+- Include concrete details: tools, numbers, steps, or frameworks
+  GOOD: "Use the STAR framework (Situation, Task, Action, Result) when writing cold outreach — it converts 3x better than feature-listing"
+  BAD: "Write better cold emails"
+  GOOD: "Set up a weekly 15-min review of your top 5 metrics dashboard every Monday morning"
+  BAD: "Track your metrics regularly"
+
+Return ONLY a JSON array of strings: ["conclusion 1", "conclusion 2", ...]`,
       },
       {
         role: 'user',

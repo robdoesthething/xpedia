@@ -5,76 +5,54 @@ export interface AIProvider {
   apiKeyEnvVar: string;
 }
 
-/** Categorization: speed-first (short output, fast inference). */
+const GEMINI: AIProvider = {
+  name: 'Google AI Studio',
+  baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
+  model: 'gemini-2.5-flash-preview-05-20',
+  apiKeyEnvVar: 'GOOGLE_AI_API_KEY',
+};
+
+const GROQ: AIProvider = {
+  name: 'Groq',
+  baseURL: 'https://api.groq.com/openai/v1',
+  model: 'llama-3.3-70b-versatile',
+  apiKeyEnvVar: 'GROQ_API_KEY',
+};
+
+const CEREBRAS: AIProvider = {
+  name: 'Cerebras',
+  baseURL: 'https://api.cerebras.ai/v1',
+  model: 'llama-3.3-70b',
+  apiKeyEnvVar: 'CEREBRAS_API_KEY',
+};
+
+const SAMBANOVA: AIProvider = {
+  name: 'SambaNova',
+  baseURL: 'https://api.sambanova.ai/v1',
+  model: 'Meta-Llama-3.3-70B-Instruct',
+  apiKeyEnvVar: 'SAMBANOVA_API_KEY',
+};
+
+/** Categorization: quality-first (Gemini primary, fast fallbacks). */
 export const CATEGORIZATION_PROVIDERS: AIProvider[] = [
-  {
-    name: 'Groq',
-    baseURL: 'https://api.groq.com/openai/v1',
-    model: 'llama-3.3-70b-versatile',
-    apiKeyEnvVar: 'GROQ_API_KEY',
-  },
-  {
-    name: 'Cerebras',
-    baseURL: 'https://api.cerebras.ai/v1',
-    model: 'llama-3.3-70b',
-    apiKeyEnvVar: 'CEREBRAS_API_KEY',
-  },
-  {
-    name: 'Google AI Studio',
-    baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
-    model: 'gemini-2.0-flash',
-    apiKeyEnvVar: 'GOOGLE_AI_API_KEY',
-  },
-  {
-    name: 'SambaNova',
-    baseURL: 'https://api.sambanova.ai/v1',
-    model: 'Meta-Llama-3.3-70B-Instruct',
-    apiKeyEnvVar: 'SAMBANOVA_API_KEY',
-  },
+  GEMINI,
+  GROQ,
+  CEREBRAS,
+  SAMBANOVA,
 ];
 
 /** Summary generation: long-context preferred. */
 export const SUMMARY_PROVIDERS: AIProvider[] = [
-  {
-    name: 'Google AI Studio',
-    baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
-    model: 'gemini-2.0-flash',
-    apiKeyEnvVar: 'GOOGLE_AI_API_KEY',
-  },
-  {
-    name: 'Groq',
-    baseURL: 'https://api.groq.com/openai/v1',
-    model: 'llama-3.3-70b-versatile',
-    apiKeyEnvVar: 'GROQ_API_KEY',
-  },
-  {
-    name: 'Cerebras',
-    baseURL: 'https://api.cerebras.ai/v1',
-    model: 'llama-3.3-70b',
-    apiKeyEnvVar: 'CEREBRAS_API_KEY',
-  },
+  GEMINI,
+  GROQ,
+  CEREBRAS,
 ];
 
 /** Conclusions generation: quality preferred. */
 export const CONCLUSIONS_PROVIDERS: AIProvider[] = [
-  {
-    name: 'SambaNova',
-    baseURL: 'https://api.sambanova.ai/v1',
-    model: 'Meta-Llama-3.3-70B-Instruct',
-    apiKeyEnvVar: 'SAMBANOVA_API_KEY',
-  },
-  {
-    name: 'Google AI Studio',
-    baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
-    model: 'gemini-2.0-flash',
-    apiKeyEnvVar: 'GOOGLE_AI_API_KEY',
-  },
-  {
-    name: 'Groq',
-    baseURL: 'https://api.groq.com/openai/v1',
-    model: 'llama-3.3-70b-versatile',
-    apiKeyEnvVar: 'GROQ_API_KEY',
-  },
+  GEMINI,
+  SAMBANOVA,
+  GROQ,
 ];
 
 /** Filter to providers whose API key env var is set. */
