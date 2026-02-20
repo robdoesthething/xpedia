@@ -5,6 +5,7 @@ import {
   CONCLUSIONS_PROVIDERS,
   getAvailableProviders,
 } from './ai-providers';
+import { logAiCall } from './ai-logger';
 
 interface MessageContent {
   type: 'text' | 'image_url';
@@ -42,7 +43,7 @@ async function callProvider(
   provider: AIProvider,
   messages: ChatMessage[],
   maxTokens: number
-): Promise<string> {
+): Promise<{ content: string; tokensIn: number; tokensOut: number }> {
   const apiKey = process.env[provider.apiKeyEnvVar];
   if (!apiKey) throw new Error(`No API key for ${provider.name}`);
 
@@ -72,14 +73,19 @@ async function callProvider(
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content;
   if (!content) throw new Error(`${provider.name} returned empty content`);
-  return content;
+
+  return {
+    content,
+    tokensIn: data.usage?.prompt_tokens ?? 0,
+    tokensOut: data.usage?.completion_tokens ?? 0,
+  };
 }
 
 async function callWithRotation(
   providers: AIProvider[],
   messages: ChatMessage[],
   maxTokens: number
-): Promise<{ content: string; provider: string } | null> {
+): Promise<{ content: string; provider: string; tokensIn: number; tokensOut: number } | null> {
   const available = getAvailableProviders(providers);
   if (available.length === 0) {
     console.warn('[AI] No providers available (no API keys configured)');
@@ -88,8 +94,8 @@ async function callWithRotation(
 
   for (const provider of available) {
     try {
-      const content = await callProvider(provider, messages, maxTokens);
-      return { content, provider: provider.name };
+      const { content, tokensIn, tokensOut } = await callProvider(provider, messages, maxTokens);
+      return { content, provider: provider.name, tokensIn, tokensOut };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.warn(`[AI] ${provider.name} failed: ${msg}`);
@@ -103,7 +109,6 @@ async function callWithRotation(
 export const aiRouter = {
   /**
    * Categorize a tweet into a collection and generate a one-line summary.
-   * Accepts a rich tweet object to include thread, article, and image context.
    * Returns null on failure (tweet stays uncategorized).
    */
   async categorize(
@@ -116,7 +121,8 @@ export const aiRouter = {
       article_description?: string | null;
       thread_content?: { content: string }[] | null;
     },
-    existingCollectionNames: string[]
+    existingCollectionNames: string[],
+    userId?: string
   ): Promise<CategorizationResult | null> {
     const collectionsContext =
       existingCollectionNames.length > 0
@@ -140,7 +146,6 @@ ${collectionsContext}
 
 Respond with ONLY valid JSON: {"collection_name": "...", "summary": "..."}`;
 
-    // Build the text portion of the user message
     let textContent = `@${tweet.author_handle}: `;
 
     if (tweet.content_type === 'thread' && tweet.thread_content?.length) {
@@ -154,7 +159,6 @@ Respond with ONLY valid JSON: {"collection_name": "...", "summary": "..."}`;
       if (tweet.article_description) textContent += `\n${tweet.article_description}`;
     }
 
-    // Build user message — add image blocks for Gemini if images present
     const images = tweet.image_urls?.slice(0, 3) ?? [];
     const userContent: string | MessageContent[] =
       images.length > 0
@@ -171,6 +175,8 @@ Respond with ONLY valid JSON: {"collection_name": "...", "summary": "..."}`;
 
     const result = await callWithRotation(CATEGORIZATION_PROVIDERS, messages, 200);
     if (!result) return null;
+
+    logAiCall({ userId, provider: result.provider, operation: 'categorize', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
 
     try {
       const parsed = JSON.parse(cleanJson(result.content));
@@ -190,11 +196,59 @@ Respond with ONLY valid JSON: {"collection_name": "...", "summary": "..."}`;
   },
 
   /**
+   * Extract the most specific, reusable content from a single tweet verbatim.
+   * Returns null on failure — caller should fall back to raw content.
+   */
+  async extractContent(
+    tweet: {
+      content: string;
+      author_handle: string;
+      content_type?: string;
+      thread_content?: { content: string }[] | null;
+    },
+    userId?: string
+  ): Promise<string | null> {
+    let rawText = tweet.content;
+    if (tweet.content_type === 'thread' && tweet.thread_content?.length) {
+      rawText = tweet.thread_content.map((t) => t.content).join('\n---\n');
+    }
+
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: `You are a content extraction engine. Read the tweet and pull out ONLY the most specific, reusable content.
+
+Rules:
+- If it contains a ready-to-use prompt → copy it word for word
+- If it has a named framework with steps → list the exact steps
+- If it has specific numbers, benchmarks, or formulas → include them precisely
+- If it contains a script, template, or checklist → quote it exactly
+- If the tweet is purely motivational or vague with no concrete takeaway → output exactly: "No specific content."
+- DO NOT add commentary, paraphrase, or introduce the content. Output ONLY the extracted material.
+- Max 200 words.`,
+      },
+      {
+        role: 'user',
+        content: `@${tweet.author_handle}: ${rawText}`,
+      },
+    ];
+
+    const result = await callWithRotation(CATEGORIZATION_PROVIDERS, messages, 300);
+    if (!result) return null;
+
+    logAiCall({ userId, provider: result.provider, operation: 'extract', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
+
+    const extracted = result.content.trim();
+    return extracted === 'No specific content.' ? null : extracted;
+  },
+
+  /**
    * Generate a summary paragraph for a collection based on its tweets.
    */
   async generateSummary(
     collectionName: string,
-    tweets: { author_handle: string; content: string }[]
+    tweets: { author_handle: string; content: string }[],
+    userId?: string
   ): Promise<string | null> {
     const tweetBlock = tweets
       .map((t, i) => `${i + 1}. @${t.author_handle}: ${t.content}`)
@@ -220,6 +274,9 @@ Write a reference summary for the "${collectionName}" collection. Rules:
 
     const result = await callWithRotation(SUMMARY_PROVIDERS, messages, 1200);
     if (!result) return null;
+
+    logAiCall({ userId, provider: result.provider, operation: 'summarize', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
+
     return result.content.trim();
   },
 
@@ -228,7 +285,8 @@ Write a reference summary for the "${collectionName}" collection. Rules:
    */
   async generateConclusions(
     collectionName: string,
-    tweets: { author_handle: string; content: string }[]
+    tweets: { author_handle: string; content: string }[],
+    userId?: string
   ): Promise<string[] | null> {
     const tweetBlock = tweets
       .map((t, i) => `${i + 1}. @${t.author_handle}: ${t.content}`)
@@ -258,6 +316,8 @@ Return ONLY a JSON array of strings: ["conclusion 1", "conclusion 2", ...]`,
 
     const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 800);
     if (!result) return null;
+
+    logAiCall({ userId, provider: result.provider, operation: 'conclude', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
 
     try {
       const parsed = JSON.parse(cleanJson(result.content));

@@ -199,7 +199,7 @@ async function categorizeTweetsInBackground(tweetIds: string[], userId: string) 
         article_url?: string | null; article_title?: string | null; article_description?: string | null;
         thread_content?: { content: string }[] | null;
       }) => {
-        const result = await aiRouter.categorize(tweet, collectionNames);
+        const result = await aiRouter.categorize(tweet, collectionNames, userId);
         if (!result) return;
 
         // Resolve or create collection

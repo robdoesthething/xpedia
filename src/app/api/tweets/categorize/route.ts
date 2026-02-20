@@ -90,7 +90,7 @@ async function categorizeTweets(
     // Process tweets sequentially to avoid rate limits on free AI tiers
     for (const tweet of tweets) {
       try {
-        const result = await aiRouter.categorize(tweet, collectionNames);
+        const result = await aiRouter.categorize(tweet, collectionNames, userId);
         if (!result) {
           errors++;
           continue;
