@@ -6,9 +6,15 @@ import {
   getAvailableProviders,
 } from './ai-providers';
 
+interface MessageContent {
+  type: 'text' | 'image_url';
+  text?: string;
+  image_url?: { url: string };
+}
+
 interface ChatMessage {
   role: 'system' | 'user';
-  content: string;
+  content: string | MessageContent[];
 }
 
 interface CategorizationResult {
@@ -97,11 +103,19 @@ async function callWithRotation(
 export const aiRouter = {
   /**
    * Categorize a tweet into a collection and generate a one-line summary.
+   * Accepts a rich tweet object to include thread, article, and image context.
    * Returns null on failure (tweet stays uncategorized).
    */
   async categorize(
-    content: string,
-    authorHandle: string,
+    tweet: {
+      content: string;
+      author_handle: string;
+      content_type?: string;
+      image_urls?: string[];
+      article_title?: string | null;
+      article_description?: string | null;
+      thread_content?: { content: string }[] | null;
+    },
     existingCollectionNames: string[]
   ): Promise<CategorizationResult | null> {
     const collectionsContext =
@@ -109,10 +123,7 @@ export const aiRouter = {
         ? `Existing collections: ${existingCollectionNames.join(', ')}`
         : 'No existing collections yet.';
 
-    const messages: ChatMessage[] = [
-      {
-        role: 'system',
-        content: `You categorize tweets into specific, actionable collections and write sharp one-line summaries.
+    const systemPrompt = `You categorize tweets into specific, actionable collections and write sharp one-line summaries.
 
 Rules:
 - Prefer assigning to an existing collection if the tweet fits.
@@ -127,12 +138,35 @@ Rules:
 
 ${collectionsContext}
 
-Respond with ONLY valid JSON: {"collection_name": "...", "summary": "..."}`,
-      },
-      {
-        role: 'user',
-        content: `@${authorHandle}: ${content}`,
-      },
+Respond with ONLY valid JSON: {"collection_name": "...", "summary": "..."}`;
+
+    // Build the text portion of the user message
+    let textContent = `@${tweet.author_handle}: `;
+
+    if (tweet.content_type === 'thread' && tweet.thread_content?.length) {
+      textContent += tweet.thread_content.map((t) => t.content).join('\n---\n');
+    } else {
+      textContent += tweet.content;
+    }
+
+    if (tweet.content_type === 'article') {
+      if (tweet.article_title) textContent = `[Article: ${tweet.article_title}]\n` + textContent;
+      if (tweet.article_description) textContent += `\n${tweet.article_description}`;
+    }
+
+    // Build user message — add image blocks for Gemini if images present
+    const images = tweet.image_urls?.slice(0, 3) ?? [];
+    const userContent: string | MessageContent[] =
+      images.length > 0
+        ? [
+            { type: 'text', text: textContent },
+            ...images.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
+          ]
+        : textContent;
+
+    const messages: ChatMessage[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userContent },
     ];
 
     const result = await callWithRotation(CATEGORIZATION_PROVIDERS, messages, 200);

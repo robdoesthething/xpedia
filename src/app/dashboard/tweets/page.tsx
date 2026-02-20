@@ -38,7 +38,7 @@ export default async function TweetsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900">
-          Uncategorized Tweets ({tweets.length})
+          Uncategorized Items ({tweets.length})
         </h2>
         <CategorizeButton tweetCount={tweets.length} />
       </div>

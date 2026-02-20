@@ -21,10 +21,10 @@ export async function POST() {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Fetch uncategorized tweets
+  // Fetch uncategorized tweets with rich fields
   const { data: tweets, error: tweetsErr } = await supabase
     .from('tweets')
-    .select('id, content, author_handle')
+    .select('id, content, author_handle, content_type, image_urls, article_url, article_title, article_description, thread_content')
     .is('collection_id', null)
     .order('captured_at', { ascending: false })
     .limit(50);
@@ -40,7 +40,12 @@ export async function POST() {
 
   // Run categorization synchronously so it completes before the function exits
   const result = await categorizeTweets(
-    tweets as { id: string; content: string; author_handle: string }[],
+    tweets as {
+      id: string; content: string; author_handle: string;
+      content_type?: string; image_urls?: string[];
+      article_url?: string | null; article_title?: string | null; article_description?: string | null;
+      thread_content?: { content: string }[] | null;
+    }[],
     user.id
   );
 
@@ -55,7 +60,12 @@ function createServiceClient() {
 }
 
 async function categorizeTweets(
-  tweets: { id: string; content: string; author_handle: string }[],
+  tweets: {
+    id: string; content: string; author_handle: string;
+    content_type?: string; image_urls?: string[];
+    article_url?: string | null; article_title?: string | null; article_description?: string | null;
+    thread_content?: { content: string }[] | null;
+  }[],
   userId: string
 ): Promise<{ categorized: number; errors: number }> {
   let categorized = 0;
@@ -80,7 +90,7 @@ async function categorizeTweets(
     // Process tweets sequentially to avoid rate limits on free AI tiers
     for (const tweet of tweets) {
       try {
-        const result = await aiRouter.categorize(tweet.content, tweet.author_handle, collectionNames);
+        const result = await aiRouter.categorize(tweet, collectionNames);
         if (!result) {
           errors++;
           continue;

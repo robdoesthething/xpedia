@@ -27,7 +27,7 @@ export async function regenerateCollectionDocument(
     client.from('collections').select('name').eq('id', collectionId).single(),
     client
       .from('tweets')
-      .select('author_handle, content')
+      .select('author_handle, content, content_type, image_urls, article_title, article_description, thread_content')
       .eq('collection_id', collectionId)
       .eq('user_id', userId)
       .order('captured_at', { ascending: true }),
@@ -38,8 +38,32 @@ export async function regenerateCollectionDocument(
     return;
   }
 
-  const tweets = tweetsRes.data ?? [];
+  const rawTweets = tweetsRes.data ?? [];
   const collectionName = collectionRes.data.name;
+
+  // Build enriched text per tweet for AI context
+  const tweets = rawTweets.map((t: {
+    author_handle: string;
+    content: string;
+    content_type?: string;
+    image_urls?: string[];
+    article_title?: string | null;
+    article_description?: string | null;
+    thread_content?: { content: string }[] | null;
+  }) => {
+    let enrichedContent = t.content;
+
+    if (t.content_type === 'thread' && t.thread_content?.length) {
+      enrichedContent = t.thread_content.map((tc) => tc.content).join('\n---\n');
+    }
+
+    if (t.content_type === 'article') {
+      if (t.article_title) enrichedContent = `[Article: ${t.article_title}]\n` + enrichedContent;
+      if (t.article_description) enrichedContent += `\n${t.article_description}`;
+    }
+
+    return { author_handle: t.author_handle, content: enrichedContent };
+  });
 
   if (tweets.length === 0) {
     // Clear stale summary when collection is emptied

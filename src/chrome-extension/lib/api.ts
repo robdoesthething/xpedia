@@ -1,11 +1,21 @@
 import { API_BASE } from './config.js';
 
+export interface ThreadTweet {
+  author_handle: string;
+  content: string;
+  position: number;
+}
+
 export interface CapturedTweet {
   tweet_url: string;
   author_handle: string;
   author_name: string | null;
   content: string;
   tweet_date: string | null;
+  content_type?: 'tweet' | 'thread' | 'article';
+  image_urls?: string[];
+  article_url?: string | null;
+  thread_content?: ThreadTweet[];
 }
 
 export async function fetchSavedUrls(token: string): Promise<string[]> {

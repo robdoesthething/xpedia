@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import type { Tweet } from '@/types/database';
 
 export default function TweetCard({
@@ -7,6 +10,8 @@ export default function TweetCard({
   tweet: Tweet;
   actions?: React.ReactNode;
 }) {
+  const [threadExpanded, setThreadExpanded] = useState(false);
+
   const displayDate = tweet.tweet_date
     ? new Date(tweet.tweet_date).toLocaleDateString('en-US', {
         month: 'long',
@@ -31,13 +36,37 @@ export default function TweetCard({
         ? tweet.content.slice(headline.length - 3).replace(/^\.{3}/, '').trim()
         : null;
 
+  const images = tweet.image_urls?.slice(0, 3) ?? [];
+  const threadTweets = tweet.thread_content ?? [];
+
+  let articleDomain: string | null = null;
+  if (tweet.article_url) {
+    try {
+      articleDomain = new URL(tweet.article_url).hostname.replace(/^www\./, '');
+    } catch {
+      articleDomain = null;
+    }
+  }
+
   return (
     <article className="rounded-lg border border-gray-200 bg-white shadow-sm">
       <div className="p-5">
-        {/* Headline */}
-        <h3 className="text-base font-semibold leading-snug text-gray-900">
-          {headline}
-        </h3>
+        {/* Header: Headline + Type badge */}
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="text-base font-semibold leading-snug text-gray-900">
+            {headline}
+          </h3>
+          {tweet.content_type === 'thread' && (
+            <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+              Thread
+            </span>
+          )}
+          {tweet.content_type === 'article' && (
+            <span className="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+              Article
+            </span>
+          )}
+        </div>
 
         {/* Body */}
         {body && (
@@ -46,11 +75,73 @@ export default function TweetCard({
           </p>
         )}
 
+        {/* Image thumbnails */}
+        {images.length > 0 && (
+          <div className="mt-3 flex gap-2">
+            {images.map((src, i) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={i}
+                src={src}
+                alt=""
+                className="h-20 w-32 rounded object-cover"
+              />
+            ))}
+          </div>
+        )}
+
         {/* AI Summary */}
         {tweet.ai_summary && (
           <p className="mt-3 border-l-2 border-blue-200 pl-3 text-sm italic text-gray-500">
             {tweet.ai_summary}
           </p>
+        )}
+
+        {/* Article card */}
+        {tweet.article_url && tweet.article_title && (
+          <a
+            href={tweet.article_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 block rounded border border-gray-200 p-3 hover:bg-gray-50"
+          >
+            <p className="text-sm font-semibold text-gray-800 leading-snug">
+              {tweet.article_title}
+            </p>
+            {tweet.article_description && (
+              <p className="mt-1 text-xs text-gray-500 line-clamp-2">
+                {tweet.article_description}
+              </p>
+            )}
+            {articleDomain && (
+              <p className="mt-1 text-xs text-blue-600">
+                {articleDomain} &rarr;
+              </p>
+            )}
+          </a>
+        )}
+
+        {/* Thread expand toggle */}
+        {threadTweets.length > 0 && (
+          <div className="mt-3">
+            <button
+              onClick={() => setThreadExpanded((v) => !v)}
+              className="text-xs font-medium text-purple-600 hover:text-purple-800"
+            >
+              {threadExpanded
+                ? 'Hide thread'
+                : `Show thread (${threadTweets.length})`}
+            </button>
+            {threadExpanded && (
+              <div className="mt-2 border-l-2 border-purple-200 pl-3 flex flex-col gap-2">
+                {threadTweets.map((t, i) => (
+                  <p key={i} className="text-sm text-gray-700 leading-relaxed">
+                    {t.content}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

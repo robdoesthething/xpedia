@@ -88,7 +88,7 @@ export default async function CollectionDetailPage({
       <hr className="my-6 border-gray-200" />
 
       <h2 className="mb-4 text-lg font-semibold text-gray-900">
-        Tweets ({tweets.length})
+        Items ({tweets.length})
       </h2>
 
       {tweets.length === 0 ? (

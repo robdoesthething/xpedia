@@ -27,7 +27,12 @@ export interface Tweet {
   author_handle: string;
   author_name: string | null;
   content: string;
+  content_type: 'tweet' | 'thread' | 'article';
   thread_content: ThreadTweet[] | null;
+  image_urls: string[];
+  article_url: string | null;
+  article_title: string | null;
+  article_description: string | null;
   ai_summary: string | null;
   tweet_date: string | null;
   captured_at: string;
@@ -46,4 +51,8 @@ export interface CapturedTweet {
   author_name: string | null;
   content: string;
   tweet_date: string | null;
+  content_type?: 'tweet' | 'thread' | 'article';
+  image_urls?: string[];
+  article_url?: string | null;
+  thread_content?: ThreadTweet[];
 }

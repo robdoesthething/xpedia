@@ -5,6 +5,7 @@ import { createClientFromToken } from '@/lib/supabase/api';
 import { corsHeaders, corsOptions } from '@/lib/cors';
 import { aiRouter } from '@/lib/ai-router';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
+import { enrichArticleUrl } from '@/lib/article-enricher';
 import type { CapturedTweet } from '@/types/database';
 
 const MAX_TWEETS_PER_REQUEST = 100;
@@ -67,6 +68,10 @@ export async function POST(request: NextRequest) {
     author_name: t.author_name,
     content: t.content,
     tweet_date: t.tweet_date,
+    content_type: t.content_type ?? 'tweet',
+    image_urls: t.image_urls ?? [],
+    article_url: t.article_url ?? null,
+    thread_content: t.thread_content ?? null,
   }));
 
   const { data, error } = await supabase
@@ -90,8 +95,13 @@ export async function POST(request: NextRequest) {
   if (saved > 0 && data) {
     const tweetIds = data.map((row: { id: string }) => row.id);
     const userId = user.id;
+    const articleTweets = body.tweets.filter((t) => t.content_type === 'article' && t.article_url);
     after(async () => {
-      await categorizeTweetsInBackground(tweetIds, userId);
+      // Enrich article metadata in parallel with categorization
+      await Promise.allSettled([
+        categorizeTweetsInBackground(tweetIds, userId),
+        enrichArticles(articleTweets, createServiceClient()),
+      ]);
     });
   }
 
@@ -157,10 +167,10 @@ async function categorizeTweetsInBackground(tweetIds: string[], userId: string) 
   try {
     const supabase = createServiceClient();
 
-    // Fetch saved tweets to get content
+    // Fetch saved tweets to get content and rich fields
     const { data: tweets, error: tweetsErr } = await supabase
       .from('tweets')
-      .select('id, content, author_handle')
+      .select('id, content, author_handle, content_type, image_urls, article_url, article_title, article_description, thread_content')
       .in('id', tweetIds);
 
     if (tweetsErr || !tweets?.length) {
@@ -183,8 +193,13 @@ async function categorizeTweetsInBackground(tweetIds: string[], userId: string) 
     const affectedCollectionIds = new Set<string>();
 
     const results = await Promise.allSettled(
-      tweets.map(async (tweet: { id: string; content: string; author_handle: string }) => {
-        const result = await aiRouter.categorize(tweet.content, tweet.author_handle, collectionNames);
+      tweets.map(async (tweet: {
+        id: string; content: string; author_handle: string;
+        content_type?: string; image_urls?: string[];
+        article_url?: string | null; article_title?: string | null; article_description?: string | null;
+        thread_content?: { content: string }[] | null;
+      }) => {
+        const result = await aiRouter.categorize(tweet, collectionNames);
         if (!result) return;
 
         // Resolve or create collection
@@ -230,6 +245,23 @@ async function categorizeTweetsInBackground(tweetIds: string[], userId: string) 
   } catch (err) {
     console.error('[AI] Background categorization failed:', err);
   }
+}
+
+async function enrichArticles(
+  articleTweets: CapturedTweet[],
+  supabase: ReturnType<typeof createServiceClient>
+) {
+  await Promise.allSettled(
+    articleTweets.map(async (t) => {
+      if (!t.article_url) return;
+      const { title, description } = await enrichArticleUrl(t.article_url);
+      if (!title && !description) return;
+      await supabase
+        .from('tweets')
+        .update({ article_title: title, article_description: description })
+        .eq('tweet_url', t.tweet_url);
+    })
+  );
 }
 
 async function resolveCollection(
