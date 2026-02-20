@@ -96,3 +96,46 @@ export async function PATCH(
 
   return Response.json({ success: true });
 }
+
+/**
+ * DELETE /api/tweets/[id] — Permanently delete a tweet.
+ * Auth: Cookie-based.
+ */
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { data: tweet, error: fetchErr } = await supabase
+    .from('tweets')
+    .select('id')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (fetchErr || !tweet) {
+    return Response.json({ error: 'Tweet not found' }, { status: 404 });
+  }
+
+  const { error: deleteErr } = await supabase
+    .from('tweets')
+    .delete()
+    .eq('id', id);
+
+  if (deleteErr) {
+    console.error('[DB] Failed to delete tweet:', deleteErr.message);
+    return Response.json({ error: 'Failed to delete tweet' }, { status: 500 });
+  }
+
+  return Response.json({ success: true });
+}
