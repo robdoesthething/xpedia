@@ -3,10 +3,12 @@ import { createClient } from '@/lib/supabase/server';
 import { aiRouter } from '@/lib/ai-router';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
 
+export const maxDuration = 60;
+
 /**
  * POST /api/tweets/categorize — Re-categorize uncategorized tweets using AI.
  * Auth: Cookie-based.
- * Triggers AI categorization on all tweets with collection_id = null.
+ * Runs synchronously so the caller gets a real result (not fire-and-forget).
  */
 export async function POST() {
   const supabase = await createClient();
@@ -36,13 +38,13 @@ export async function POST() {
     return Response.json({ categorized: 0 });
   }
 
-  // Fire-and-forget the actual categorization work
-  void categorizeInBackground(
+  // Run categorization synchronously so it completes before the function exits
+  const result = await categorizeTweets(
     tweets as { id: string; content: string; author_handle: string }[],
     user.id
   );
 
-  return Response.json({ queued: tweets.length });
+  return Response.json(result);
 }
 
 function createServiceClient() {
@@ -52,10 +54,13 @@ function createServiceClient() {
   );
 }
 
-async function categorizeInBackground(
+async function categorizeTweets(
   tweets: { id: string; content: string; author_handle: string }[],
   userId: string
-) {
+): Promise<{ categorized: number; errors: number }> {
+  let categorized = 0;
+  let errors = 0;
+
   try {
     const supabase = createServiceClient();
 
@@ -72,10 +77,14 @@ async function categorizeInBackground(
 
     const affectedCollectionIds = new Set<string>();
 
-    const results = await Promise.allSettled(
-      tweets.map(async (tweet) => {
+    // Process tweets sequentially to avoid rate limits on free AI tiers
+    for (const tweet of tweets) {
+      try {
         const result = await aiRouter.categorize(tweet.content, tweet.author_handle, collectionNames);
-        if (!result) return;
+        if (!result) {
+          errors++;
+          continue;
+        }
 
         // Resolve or create collection
         let collectionId = collectionMap.get(result.collection_name.toLowerCase());
@@ -88,7 +97,6 @@ async function categorizeInBackground(
             .single();
 
           if (error) {
-            // Race condition fallback
             const { data: fallback } = await supabase
               .from('collections')
               .select('id')
@@ -100,11 +108,14 @@ async function categorizeInBackground(
               collectionId = fallback.id;
             } else {
               console.error(`[AI] Failed to create collection "${result.collection_name}":`, error.message);
-              return;
+              errors++;
+              continue;
             }
           } else {
             collectionId = data.id;
             collectionMap.set(result.collection_name.toLowerCase(), data.id);
+            // Also add to collectionNames so subsequent AI calls see it
+            collectionNames.push(result.collection_name);
             console.log(`[AI] Created collection "${result.collection_name}" (${data.id})`);
           }
         }
@@ -116,20 +127,20 @@ async function categorizeInBackground(
 
         if (updateErr) {
           console.error(`[AI] Failed to update tweet ${tweet.id}:`, updateErr.message);
-          return;
+          errors++;
+          continue;
         }
 
         console.log(`[AI] Tweet ${tweet.id} → collection "${result.collection_name}" via ${result.provider}`);
         affectedCollectionIds.add(collectionId!);
-      })
-    );
-
-    for (const r of results) {
-      if (r.status === 'rejected') {
-        console.error('[AI] Categorization error:', r.reason);
+        categorized++;
+      } catch (err) {
+        console.error(`[AI] Error categorizing tweet ${tweet.id}:`, err);
+        errors++;
       }
     }
 
+    // Regenerate documents for all affected collections
     if (affectedCollectionIds.size > 0) {
       await Promise.allSettled(
         [...affectedCollectionIds].map((id) =>
@@ -138,6 +149,8 @@ async function categorizeInBackground(
       );
     }
   } catch (err) {
-    console.error('[AI] Background categorization failed:', err);
+    console.error('[AI] Categorization failed:', err);
   }
+
+  return { categorized, errors };
 }

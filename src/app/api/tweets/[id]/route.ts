@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
 
@@ -76,17 +77,21 @@ export async function PATCH(
     return Response.json({ error: 'Failed to move tweet' }, { status: 500 });
   }
 
-  // Fire-and-forget: regenerate documents for affected collections
+  // Use after() so regeneration runs after the response is sent but before
+  // the serverless function exits
   const collectionsToRegenerate: string[] = [];
   if (oldCollectionId) collectionsToRegenerate.push(oldCollectionId);
   if (body.collection_id) collectionsToRegenerate.push(body.collection_id);
+  const userId = user.id;
 
   if (collectionsToRegenerate.length > 0) {
-    void Promise.allSettled(
-      collectionsToRegenerate.map((colId) =>
-        regenerateCollectionDocument(colId, user.id)
-      )
-    );
+    after(async () => {
+      await Promise.allSettled(
+        collectionsToRegenerate.map((colId) =>
+          regenerateCollectionDocument(colId, userId)
+        )
+      );
+    });
   }
 
   return Response.json({ success: true });

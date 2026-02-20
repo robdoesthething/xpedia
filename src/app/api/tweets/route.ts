@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, after } from 'next/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createClientFromToken } from '@/lib/supabase/api';
@@ -89,7 +89,10 @@ export async function POST(request: NextRequest) {
 
   if (saved > 0 && data) {
     const tweetIds = data.map((row: { id: string }) => row.id);
-    void categorizeTweetsInBackground(tweetIds, user.id);
+    const userId = user.id;
+    after(async () => {
+      await categorizeTweetsInBackground(tweetIds, userId);
+    });
   }
 
   return Response.json({ saved, duplicates }, { headers: corsHeaders });

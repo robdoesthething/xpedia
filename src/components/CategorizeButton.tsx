@@ -5,27 +5,22 @@ import { useRouter } from 'next/navigation';
 
 export default function CategorizeButton({ tweetCount }: { tweetCount: number }) {
   const [loading, setLoading] = useState(false);
-  const [queued, setQueued] = useState<number | null>(null);
+  const [result, setResult] = useState<{ categorized: number; errors: number } | null>(null);
   const router = useRouter();
 
   async function handleCategorize() {
     setLoading(true);
-    setQueued(null);
+    setResult(null);
 
     const res = await fetch('/api/tweets/categorize', { method: 'POST' });
 
     if (res.ok) {
       const data = await res.json();
-      setQueued(data.queued ?? 0);
-      // Refresh after a delay to let background categorization work
-      setTimeout(() => {
-        router.refresh();
-        setLoading(false);
-        setQueued(null);
-      }, 5000);
-    } else {
-      setLoading(false);
+      setResult(data);
+      router.refresh();
     }
+
+    setLoading(false);
   }
 
   return (
@@ -38,9 +33,9 @@ export default function CategorizeButton({ tweetCount }: { tweetCount: number })
       >
         {loading ? 'Categorizing...' : `Categorize ${tweetCount} tweets`}
       </button>
-      {queued !== null && (
+      {result && (
         <span className="text-sm text-gray-500">
-          {queued} tweets queued for AI categorization. Refreshing shortly...
+          {result.categorized} categorized{result.errors > 0 ? `, ${result.errors} failed` : ''}
         </span>
       )}
     </div>
