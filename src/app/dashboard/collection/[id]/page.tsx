@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { generateCollectionMarkdown } from '@/lib/export';
 import ExportButtons from '@/components/ExportButtons';
+import CollectionActions from '@/components/CollectionActions';
 import TweetCard from '@/components/TweetCard';
 import MoveTweetButton from '@/components/MoveTweetButton';
 import type { Collection, Tweet } from '@/types/database';
@@ -55,6 +56,13 @@ export default async function CollectionDetailPage({
           <span className="mt-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
             {collection.type}
           </span>
+          <div className="mt-2">
+            <CollectionActions
+              collectionId={collection.id}
+              initialName={collection.name}
+              initialType={collection.type}
+            />
+          </div>
         </div>
         <ExportButtons markdown={markdown} filename={filename} />
       </div>

@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation';
 
 const tabs = [
   { label: 'Collections', href: '/dashboard' },
-  { label: 'Recent Tweets', href: '/dashboard/tweets' },
+  { label: 'Uncategorized', href: '/dashboard/tweets' },
+  { label: 'Users', href: '/dashboard/users' },
 ] as const;
 
 export default function DashboardTabs() {
