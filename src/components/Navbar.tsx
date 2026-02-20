@@ -16,13 +16,13 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="flex items-center justify-between border-b border-stone-200 bg-white px-6 py-4">
-      <span className="text-base font-bold tracking-tight text-stone-900">Xpedia</span>
+    <nav className="flex items-center justify-between border-b border-seam bg-ink px-6 py-4">
+      <span className="font-mono text-sm tracking-widest text-gold uppercase">Xpedia</span>
       <div className="flex items-center gap-4">
-        {user && <span className="text-sm text-stone-400">{user.email}</span>}
+        {user && <span className="font-mono text-xs text-shadow">{user.email}</span>}
         <button
           onClick={handleSignOut}
-          className="rounded-md px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-100"
+          className="font-mono text-xs tracking-widest text-mist uppercase hover:text-parchment transition-colors"
         >
           Sign out
         </button>

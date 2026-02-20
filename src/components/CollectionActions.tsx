@@ -60,12 +60,12 @@ export default function CollectionActions({
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={100}
-          className="rounded-md border border-stone-300 px-2 py-1 text-sm focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+          className="bg-void border border-seam px-3 py-1.5 text-sm text-parchment focus:border-gold focus:outline-none transition-colors"
         />
         <select
           value={type}
           onChange={(e) => setType(e.target.value as 'topic' | 'project')}
-          className="rounded-md border border-stone-300 px-2 py-1 text-sm focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+          className="bg-void border border-seam px-2 py-1.5 text-sm text-parchment focus:border-gold focus:outline-none transition-colors"
         >
           <option value="topic">Topic</option>
           <option value="project">Project</option>
@@ -73,13 +73,13 @@ export default function CollectionActions({
         <button
           onClick={handleSave}
           disabled={saving || !name.trim()}
-          className="rounded-md bg-amber-500 px-3 py-1 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-50"
+          className="bg-gold text-void font-mono text-xs tracking-widest uppercase px-3 py-1.5 hover:bg-gold-bright transition-colors disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save'}
         </button>
         <button
           onClick={() => { setName(initialName); setType(initialType); setEditing(false); }}
-          className="rounded-md px-3 py-1 text-sm text-stone-500 hover:text-stone-700"
+          className="font-mono text-xs tracking-widest text-shadow uppercase hover:text-mist transition-colors px-2 py-1.5"
         >
           Cancel
         </button>
@@ -90,17 +90,17 @@ export default function CollectionActions({
   if (confirmDelete) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-sm text-red-600">Delete this collection? Items will become uncategorized.</span>
+        <span className="font-mono text-xs text-red-400">Delete? Items will become uncategorized.</span>
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="rounded-md bg-red-600 px-3 py-1 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+          className="border border-red-700 bg-red-900/50 font-mono text-xs tracking-widest text-red-300 uppercase px-3 py-1.5 hover:bg-red-900 transition-colors disabled:opacity-50"
         >
           {deleting ? 'Deleting...' : 'Confirm'}
         </button>
         <button
           onClick={() => setConfirmDelete(false)}
-          className="rounded-md px-3 py-1 text-sm text-stone-500 hover:text-stone-700"
+          className="font-mono text-xs tracking-widest text-shadow uppercase hover:text-mist transition-colors px-2 py-1.5"
         >
           Cancel
         </button>
@@ -113,19 +113,19 @@ export default function CollectionActions({
       <button
         onClick={handleRegenerate}
         disabled={regenerating}
-        className="rounded-md border border-stone-300 px-3 py-1 text-sm text-stone-600 hover:bg-stone-50 disabled:opacity-50"
+        className="border border-seam font-mono text-xs tracking-widest text-mist uppercase px-3 py-1.5 hover:border-gold/40 hover:text-parchment transition-colors disabled:opacity-50"
       >
         {regenerating ? 'Regenerating...' : 'Regenerate'}
       </button>
       <button
         onClick={() => setEditing(true)}
-        className="rounded-md border border-stone-300 px-3 py-1 text-sm text-stone-600 hover:bg-stone-50"
+        className="border border-seam font-mono text-xs tracking-widest text-mist uppercase px-3 py-1.5 hover:border-gold/40 hover:text-parchment transition-colors"
       >
         Edit
       </button>
       <button
         onClick={() => setConfirmDelete(true)}
-        className="rounded-md border border-red-200 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+        className="border border-red-900/50 font-mono text-xs tracking-widest text-red-400 uppercase px-3 py-1.5 hover:border-red-700 transition-colors"
       >
         Delete
       </button>

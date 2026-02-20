@@ -57,17 +57,17 @@ export default function MoveTweetButton({
         type="button"
         onClick={() => setOpen(!open)}
         disabled={loading}
-        className="text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50"
+        className="font-mono text-xs tracking-widest text-shadow uppercase hover:text-mist transition-colors disabled:opacity-50"
       >
         {loading ? 'Moving...' : 'Move to...'}
       </button>
 
       {open && (
-        <div className="absolute right-0 z-20 mt-1 w-48 rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+        <div className="absolute right-0 z-20 mt-1 w-52 border border-seam bg-ink shadow-xl">
           {currentCollectionId && (
             <button
               onClick={() => moveTo(null)}
-              className="block w-full px-3 py-2 text-left text-sm text-gray-600 hover:bg-gray-50"
+              className="block w-full px-3 py-2 text-left font-mono text-xs text-mist hover:bg-quill transition-colors"
             >
               Uncategorized
             </button>
@@ -76,13 +76,13 @@ export default function MoveTweetButton({
             <button
               key={c.id}
               onClick={() => moveTo(c.id)}
-              className="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+              className="block w-full border-t border-seam px-3 py-2 text-left font-mono text-xs text-mist hover:bg-quill transition-colors first:border-0"
             >
               {c.name}
             </button>
           ))}
           {options.length === 0 && !currentCollectionId && (
-            <p className="px-3 py-2 text-sm text-gray-400">No collections available</p>
+            <p className="px-3 py-2 font-mono text-xs text-shadow">No collections available</p>
           )}
         </div>
       )}

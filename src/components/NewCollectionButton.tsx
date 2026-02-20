@@ -19,7 +19,7 @@ export default function NewCollectionButton() {
       <button
         type="button"
         onClick={() => setShowModal(true)}
-        className="rounded-md bg-amber-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2"
+        className="bg-gold text-void font-mono text-xs tracking-widest uppercase px-4 py-2 hover:bg-gold-bright transition-colors focus:outline-none"
       >
         + New Collection
       </button>

@@ -25,10 +25,10 @@ export default function DashboardTabs() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`border-b-2 px-1 py-3 text-sm font-medium transition-colors ${
+            className={`border-b-2 px-1 py-3 font-mono text-xs tracking-widest uppercase transition-colors ${
               isActive
-                ? 'border-amber-500 text-stone-900'
-                : 'border-transparent text-stone-500 hover:border-stone-300 hover:text-stone-700'
+                ? 'border-gold text-parchment'
+                : 'border-transparent text-shadow hover:border-seam hover:text-mist'
             }`}
           >
             {tab.label}

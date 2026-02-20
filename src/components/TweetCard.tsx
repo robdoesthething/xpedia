@@ -48,28 +48,30 @@ export default function TweetCard({
   }
 
   return (
-    <article className="rounded-lg border border-stone-200 bg-white">
+    <article className="border border-seam bg-ink">
       <div className="p-5">
         {/* Header: Headline + Type badge */}
         <div className="flex items-start justify-between gap-3">
-          <h3 className="text-base font-semibold leading-snug text-stone-900">
+          <h3 className="font-serif text-lg leading-snug text-parchment">
             {headline}
           </h3>
-          {tweet.content_type === 'thread' && (
-            <span className="shrink-0 rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
-              Thread
-            </span>
-          )}
-          {tweet.content_type === 'article' && (
-            <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
-              Article
-            </span>
-          )}
+          <div className="flex shrink-0 gap-1.5 mt-0.5">
+            {tweet.content_type === 'thread' && (
+              <span className="font-mono text-xs tracking-widest text-gold uppercase border border-gold/30 px-2 py-0.5">
+                Thread
+              </span>
+            )}
+            {tweet.content_type === 'article' && (
+              <span className="font-mono text-xs tracking-widest text-gold uppercase border border-gold/30 px-2 py-0.5">
+                Article
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Body */}
         {body && (
-          <p className="mt-2 text-sm leading-relaxed text-stone-600 line-clamp-3">
+          <p className="mt-2 text-sm leading-relaxed text-mist line-clamp-3">
             {body}
           </p>
         )}
@@ -83,7 +85,7 @@ export default function TweetCard({
                 key={i}
                 src={src}
                 alt=""
-                className="h-20 w-32 rounded object-cover"
+                className="h-20 w-32 object-cover"
               />
             ))}
           </div>
@@ -91,7 +93,7 @@ export default function TweetCard({
 
         {/* AI Summary */}
         {tweet.ai_summary && (
-          <p className="mt-3 border-l-2 border-amber-200 pl-3 text-sm italic text-stone-500">
+          <p className="mt-3 border-l-2 border-gold/30 pl-3 text-sm italic text-mist">
             {tweet.ai_summary}
           </p>
         )}
@@ -102,18 +104,18 @@ export default function TweetCard({
             href={tweet.article_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 block rounded border border-stone-200 p-3 hover:bg-stone-50"
+            className="mt-3 block border border-seam p-3 hover:border-gold/40 hover:bg-quill transition-colors"
           >
-            <p className="text-sm font-semibold leading-snug text-stone-800">
+            <p className="text-sm font-semibold leading-snug text-parchment">
               {tweet.article_title}
             </p>
             {tweet.article_description && (
-              <p className="mt-1 text-xs text-stone-500 line-clamp-2">
+              <p className="mt-1 text-xs text-mist line-clamp-2">
                 {tweet.article_description}
               </p>
             )}
             {articleDomain && (
-              <p className="mt-1 text-xs text-amber-600">
+              <p className="mt-1 font-mono text-xs text-gold">
                 {articleDomain} &rarr;
               </p>
             )}
@@ -125,16 +127,16 @@ export default function TweetCard({
           <div className="mt-3">
             <button
               onClick={() => setThreadExpanded((v) => !v)}
-              className="text-xs font-medium text-purple-600 hover:text-purple-800"
+              className="font-mono text-xs tracking-widest text-gold uppercase hover:text-gold-bright transition-colors"
             >
               {threadExpanded
                 ? 'Hide thread'
                 : `Show thread (${threadTweets.length})`}
             </button>
             {threadExpanded && (
-              <div className="mt-2 flex flex-col gap-2 border-l-2 border-purple-200 pl-3">
+              <div className="mt-2 flex flex-col gap-2 border-l-2 border-gold/20 pl-3">
                 {threadTweets.map((t, i) => (
-                  <p key={i} className="text-sm leading-relaxed text-stone-700">
+                  <p key={i} className="text-sm leading-relaxed text-mist">
                     {t.content}
                   </p>
                 ))}
@@ -145,15 +147,15 @@ export default function TweetCard({
       </div>
 
       {/* Footer — byline + actions */}
-      <div className="flex items-center justify-between border-t border-stone-100 px-5 py-3">
-        <div className="flex items-center gap-2 text-xs text-stone-500">
-          <span className="font-medium text-stone-700">
+      <div className="flex items-center justify-between border-t border-seam px-5 py-3">
+        <div className="flex items-center gap-2 font-mono text-xs text-shadow">
+          <span className="text-mist">
             {tweet.author_name ?? `@${tweet.author_handle}`}
           </span>
           {tweet.author_name && <span>@{tweet.author_handle}</span>}
           {displayDate && (
             <>
-              <span className="text-stone-300">&middot;</span>
+              <span>&middot;</span>
               <span>{displayDate}</span>
             </>
           )}
@@ -163,9 +165,9 @@ export default function TweetCard({
             href={tweet.tweet_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-medium text-amber-600 hover:text-amber-700"
+            className="font-mono text-xs tracking-widest text-gold uppercase hover:text-gold-bright transition-colors"
           >
-            View on X &rarr;
+            View &rarr;
           </a>
           {actions}
         </div>

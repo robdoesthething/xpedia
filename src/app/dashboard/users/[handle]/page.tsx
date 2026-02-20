@@ -26,30 +26,30 @@ export default async function UserDetailPage({
     <div>
       <Link
         href="/dashboard/users"
-        className="mb-6 inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
+        className="mb-6 inline-flex items-center font-mono text-xs tracking-widest text-shadow uppercase hover:text-mist transition-colors"
       >
-        &larr; Back to users
+        &larr; Users
       </Link>
 
-      <h1 className="mb-1 text-2xl font-semibold text-gray-900">
+      <h1 className="mb-1 font-serif text-4xl text-parchment">
         {authorName ?? `@${decodedHandle}`}
       </h1>
       {authorName && (
-        <p className="mb-6 text-sm text-gray-500">@{decodedHandle}</p>
+        <p className="mb-2 font-mono text-xs text-shadow">@{decodedHandle}</p>
       )}
 
-      <p className="mb-6 text-sm text-gray-500">
-        {tweetList.length} saved {tweetList.length === 1 ? 'tweet' : 'tweets'}
+      <p className="mb-8 font-mono text-xs text-shadow">
+        {tweetList.length} saved {tweetList.length === 1 ? 'item' : 'items'}
       </p>
 
       {tweetList.length === 0 ? (
-        <p className="text-sm text-gray-500">No tweets saved from this user.</p>
+        <p className="text-sm text-mist">No items saved from this user.</p>
       ) : (
         <div className="flex flex-col gap-4">
           {tweetList.map((tweet) => (
             <div key={tweet.id}>
               {tweet.collections?.name && (
-                <span className="mb-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                <span className="mb-1 inline-block font-mono text-xs tracking-widest text-gold uppercase">
                   {tweet.collections.name}
                 </span>
               )}

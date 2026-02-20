@@ -29,12 +29,12 @@ export default function CategorizeButton({ tweetCount }: { tweetCount: number })
         type="button"
         onClick={handleCategorize}
         disabled={loading}
-        className="rounded-md bg-amber-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 disabled:opacity-50"
+        className="bg-gold text-void font-mono text-xs tracking-widest uppercase px-4 py-2 hover:bg-gold-bright transition-colors focus:outline-none disabled:opacity-50"
       >
         {loading ? 'Categorizing...' : `Categorize ${tweetCount} items`}
       </button>
       {result && (
-        <span className="text-sm text-stone-500">
+        <span className="font-mono text-xs text-mist">
           {result.categorized} categorized{result.errors > 0 ? `, ${result.errors} failed` : ''}
         </span>
       )}

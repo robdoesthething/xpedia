@@ -1,10 +1,57 @@
 @import 'tailwindcss';
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Typography */
+  --font-serif:  var(--font-cormorant), Georgia, serif;
+  --font-sans:   var(--font-dm-sans), system-ui, sans-serif;
+  --font-mono:   var(--font-jetbrains), 'Courier New', monospace;
+
+  /* Dark Archive palette */
+  --color-void:       #0c0b0a;
+  --color-ink:        #181614;
+  --color-quill:      #201d19;
+  --color-seam:       #2c2924;
+  --color-veil:       #3b3730;
+
+  --color-parchment:  #ede8de;
+  --color-mist:       #978f85;
+  --color-shadow:     #56514b;
+
+  --color-gold:       #c8892a;
+  --color-gold-bright:#dfa040;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background-color: #fafaf9; /* stone-50 */
+  background-color: #0c0b0a;
+  color: #ede8de;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0c0b0a; }
+::-webkit-scrollbar-thumb { background: #2c2924; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3b3730; }
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid #c8892a;
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background: #c8892a33;
+  color: #ede8de;
 }

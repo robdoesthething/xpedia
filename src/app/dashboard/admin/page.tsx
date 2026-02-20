@@ -30,11 +30,11 @@ function pct(used: number, limit: number) {
 function ProgressBar({ value, warn = 70, danger = 90 }: { value: number; warn?: number; danger?: number }) {
   const color =
     value >= danger ? 'bg-red-500' :
-    value >= warn   ? 'bg-amber-400' :
+    value >= warn   ? 'bg-gold' :
                       'bg-emerald-500';
   return (
-    <div className="h-1.5 w-full rounded-full bg-stone-100">
-      <div className={`h-1.5 rounded-full ${color}`} style={{ width: `${value}%` }} />
+    <div className="h-1 w-full bg-seam">
+      <div className={`h-1 ${color}`} style={{ width: `${value}%` }} />
     </div>
   );
 }
@@ -56,16 +56,13 @@ export default async function AdminPage() {
 
   const allRows = rows ?? [];
 
-  // Split today vs all-time
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const todayRows = allRows.filter((r) => new Date(r.created_at) >= todayStart);
 
-  // Successful calls only (not rate_limited)
   const successRows = allRows.filter((r) => r.operation !== 'rate_limited');
   const todaySuccessRows = todayRows.filter((r) => r.operation !== 'rate_limited');
 
-  // Per-provider stats
   const providerStats = ALL_PROVIDERS.map((provider) => {
     const todayCalls = todaySuccessRows.filter((r) => r.provider === provider.name).length;
     const todayRateLimited = todayRows.filter(
@@ -82,19 +79,9 @@ export default async function AdminPage() {
     const reqPct = pct(todayCalls, provider.quota.requestsPerDay);
     const tokenPct = pct(todayTokensIn + todayTokensOut, provider.quota.tokensPerMinute * 60 * 24);
 
-    return {
-      provider,
-      todayCalls,
-      todayRateLimited,
-      allTimeCalls,
-      todayTokensIn,
-      todayTokensOut,
-      reqPct,
-      tokenPct,
-    };
+    return { provider, todayCalls, todayRateLimited, allTimeCalls, todayTokensIn, todayTokensOut, reqPct, tokenPct };
   });
 
-  // Aggregate by operation
   const byOperation = new Map<string, { calls: number; tokensIn: number; tokensOut: number }>();
   for (const row of successRows) {
     const e = byOperation.get(row.operation) ?? { calls: 0, tokensIn: 0, tokensOut: 0 };
@@ -106,7 +93,6 @@ export default async function AdminPage() {
   }
   const sortedByOperation = [...byOperation.entries()].sort((a, b) => b[1].calls - a[1].calls);
 
-  // Aggregate by user
   const byUser = new Map<string, { calls: number; tokensIn: number; tokensOut: number }>();
   for (const row of successRows) {
     const key = row.user_id ?? 'anonymous';
@@ -129,8 +115,8 @@ export default async function AdminPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-xl font-semibold text-stone-900">AI Usage</h2>
-        <p className="mt-1 text-sm text-stone-500">Model usage, quotas, and per-task breakdown.</p>
+        <h2 className="font-serif text-3xl text-parchment">AI Usage</h2>
+        <p className="mt-1 font-mono text-xs text-shadow">Model usage, quotas, and per-task breakdown.</p>
       </div>
 
       {/* Totals */}
@@ -141,28 +127,28 @@ export default async function AdminPage() {
           { label: 'Tokens out', value: fmt(totalTokensOut) },
           { label: 'Rate limits hit', value: fmt(totalRateLimited) },
         ].map(({ label, value }) => (
-          <div key={label} className="rounded-lg border border-stone-200 bg-white p-4">
-            <p className="text-xs font-medium uppercase tracking-widest text-stone-400">{label}</p>
-            <p className="mt-1 text-2xl font-bold text-stone-900">{value}</p>
+          <div key={label} className="border border-seam bg-ink p-4">
+            <p className="font-mono text-xs tracking-widest text-shadow uppercase">{label}</p>
+            <p className="mt-2 font-serif text-3xl text-parchment">{value}</p>
           </div>
         ))}
       </div>
 
       {/* Quota per provider */}
       <section>
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-widest text-stone-400">
+        <h3 className="mb-4 font-mono text-xs tracking-widest text-gold uppercase">
           Provider quotas — today
         </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {providerStats.map(({ provider, todayCalls, todayRateLimited, allTimeCalls, todayTokensIn, todayTokensOut, reqPct, tokenPct }) => (
-            <div key={provider.name} className="rounded-lg border border-stone-200 bg-white p-4">
-              <div className="mb-3 flex items-start justify-between">
+            <div key={provider.name} className="border border-seam bg-ink p-4">
+              <div className="mb-4 flex items-start justify-between">
                 <div>
-                  <p className="font-semibold text-stone-900">{provider.name}</p>
-                  <p className="text-xs text-stone-400">{provider.model}</p>
+                  <p className="font-serif text-lg text-parchment">{provider.name}</p>
+                  <p className="font-mono text-xs text-shadow">{provider.model}</p>
                 </div>
                 {todayRateLimited > 0 && (
-                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">
+                  <span className="border border-red-800 font-mono text-xs tracking-widest text-red-400 uppercase px-2 py-0.5">
                     {todayRateLimited} throttled
                   </span>
                 )}
@@ -170,14 +156,14 @@ export default async function AdminPage() {
 
               <div className="space-y-3">
                 <div>
-                  <div className="mb-1 flex justify-between text-xs text-stone-500">
+                  <div className="mb-1.5 flex justify-between font-mono text-xs text-shadow">
                     <span>Requests / day</span>
                     <span>{fmt(todayCalls)} / {fmt(provider.quota.requestsPerDay)} ({reqPct}%)</span>
                   </div>
                   <ProgressBar value={reqPct} />
                 </div>
                 <div>
-                  <div className="mb-1 flex justify-between text-xs text-stone-500">
+                  <div className="mb-1.5 flex justify-between font-mono text-xs text-shadow">
                     <span>Tokens today</span>
                     <span>{fmt(todayTokensIn + todayTokensOut)}</span>
                   </div>
@@ -185,14 +171,14 @@ export default async function AdminPage() {
                 </div>
               </div>
 
-              <div className="mt-3 flex gap-4 border-t border-stone-100 pt-3 text-xs text-stone-400">
+              <div className="mt-4 flex gap-4 border-t border-seam pt-3 font-mono text-xs text-shadow">
                 <span>All-time: {fmt(allTimeCalls)} calls</span>
-                <span>RPM limit: {provider.quota.requestsPerMinute}</span>
+                <span>RPM: {provider.quota.requestsPerMinute}</span>
               </div>
             </div>
           ))}
         </div>
-        <p className="mt-2 text-xs text-stone-400">
+        <p className="mt-2 font-mono text-xs text-shadow">
           Limits are free-tier estimates — verify against each provider&apos;s dashboard.
         </p>
       </section>
@@ -200,28 +186,28 @@ export default async function AdminPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* By task */}
         <section>
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-widest text-stone-400">By task</h3>
-          <div className="overflow-hidden rounded-lg border border-stone-200 bg-white">
+          <h3 className="mb-4 font-mono text-xs tracking-widest text-gold uppercase">By task</h3>
+          <div className="border border-seam bg-ink overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-stone-100 text-left text-xs font-medium uppercase tracking-wide text-stone-400">
-                  <th className="px-4 py-3">Operation</th>
-                  <th className="px-4 py-3 text-right">Calls</th>
-                  <th className="px-4 py-3 text-right">Tokens in</th>
-                  <th className="px-4 py-3 text-right">Tokens out</th>
+                <tr className="border-b border-seam">
+                  <th className="px-4 py-3 text-left font-mono text-xs tracking-widest text-shadow uppercase">Operation</th>
+                  <th className="px-4 py-3 text-right font-mono text-xs tracking-widest text-shadow uppercase">Calls</th>
+                  <th className="px-4 py-3 text-right font-mono text-xs tracking-widest text-shadow uppercase">In</th>
+                  <th className="px-4 py-3 text-right font-mono text-xs tracking-widest text-shadow uppercase">Out</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-seam">
                 {sortedByOperation.map(([op, s]) => (
                   <tr key={op}>
-                    <td className="px-4 py-3 font-medium text-stone-800">{op}</td>
-                    <td className="px-4 py-3 text-right text-stone-600">{fmt(s.calls)}</td>
-                    <td className="px-4 py-3 text-right text-stone-600">{fmt(s.tokensIn)}</td>
-                    <td className="px-4 py-3 text-right text-stone-600">{fmt(s.tokensOut)}</td>
+                    <td className="px-4 py-3 text-sm text-parchment">{op}</td>
+                    <td className="px-4 py-3 text-right font-mono text-xs text-mist">{fmt(s.calls)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-xs text-mist">{fmt(s.tokensIn)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-xs text-mist">{fmt(s.tokensOut)}</td>
                   </tr>
                 ))}
                 {sortedByOperation.length === 0 && (
-                  <tr><td colSpan={4} className="px-4 py-6 text-center text-stone-400">No data yet</td></tr>
+                  <tr><td colSpan={4} className="px-4 py-6 text-center font-mono text-xs text-shadow">No data yet</td></tr>
                 )}
               </tbody>
             </table>
@@ -230,28 +216,28 @@ export default async function AdminPage() {
 
         {/* By user */}
         <section>
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-widest text-stone-400">By user</h3>
-          <div className="overflow-hidden rounded-lg border border-stone-200 bg-white">
+          <h3 className="mb-4 font-mono text-xs tracking-widest text-gold uppercase">By user</h3>
+          <div className="border border-seam bg-ink overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-stone-100 text-left text-xs font-medium uppercase tracking-wide text-stone-400">
-                  <th className="px-4 py-3">User ID</th>
-                  <th className="px-4 py-3 text-right">Calls</th>
-                  <th className="px-4 py-3 text-right">Tokens in</th>
-                  <th className="px-4 py-3 text-right">Tokens out</th>
+                <tr className="border-b border-seam">
+                  <th className="px-4 py-3 text-left font-mono text-xs tracking-widest text-shadow uppercase">User ID</th>
+                  <th className="px-4 py-3 text-right font-mono text-xs tracking-widest text-shadow uppercase">Calls</th>
+                  <th className="px-4 py-3 text-right font-mono text-xs tracking-widest text-shadow uppercase">In</th>
+                  <th className="px-4 py-3 text-right font-mono text-xs tracking-widest text-shadow uppercase">Out</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-100">
+              <tbody className="divide-y divide-seam">
                 {sortedByUser.map(([userId, s]) => (
                   <tr key={userId}>
-                    <td className="px-4 py-3 font-mono text-xs text-stone-500 truncate max-w-[140px]">{userId}</td>
-                    <td className="px-4 py-3 text-right text-stone-600">{fmt(s.calls)}</td>
-                    <td className="px-4 py-3 text-right text-stone-600">{fmt(s.tokensIn)}</td>
-                    <td className="px-4 py-3 text-right text-stone-600">{fmt(s.tokensOut)}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-mist truncate max-w-[140px]">{userId}</td>
+                    <td className="px-4 py-3 text-right font-mono text-xs text-mist">{fmt(s.calls)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-xs text-mist">{fmt(s.tokensIn)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-xs text-mist">{fmt(s.tokensOut)}</td>
                   </tr>
                 ))}
                 {sortedByUser.length === 0 && (
-                  <tr><td colSpan={4} className="px-4 py-6 text-center text-stone-400">No data yet</td></tr>
+                  <tr><td colSpan={4} className="px-4 py-6 text-center font-mono text-xs text-shadow">No data yet</td></tr>
                 )}
               </tbody>
             </table>
@@ -261,34 +247,34 @@ export default async function AdminPage() {
 
       {/* Recent calls */}
       <section>
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-widest text-stone-400">Recent calls</h3>
-        <div className="overflow-hidden rounded-lg border border-stone-200 bg-white">
+        <h3 className="mb-4 font-mono text-xs tracking-widest text-gold uppercase">Recent calls</h3>
+        <div className="border border-seam bg-ink overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-stone-100 text-left text-xs font-medium uppercase tracking-wide text-stone-400">
-                <th className="px-4 py-3">Time</th>
-                <th className="px-4 py-3">Provider</th>
-                <th className="px-4 py-3">Operation</th>
-                <th className="px-4 py-3 text-right">Tokens in</th>
-                <th className="px-4 py-3 text-right">Tokens out</th>
+              <tr className="border-b border-seam">
+                <th className="px-4 py-3 text-left font-mono text-xs tracking-widest text-shadow uppercase">Time</th>
+                <th className="px-4 py-3 text-left font-mono text-xs tracking-widest text-shadow uppercase">Provider</th>
+                <th className="px-4 py-3 text-left font-mono text-xs tracking-widest text-shadow uppercase">Operation</th>
+                <th className="px-4 py-3 text-right font-mono text-xs tracking-widest text-shadow uppercase">In</th>
+                <th className="px-4 py-3 text-right font-mono text-xs tracking-widest text-shadow uppercase">Out</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody className="divide-y divide-seam">
               {recent.map((row, i) => (
-                <tr key={i} className={row.operation === 'rate_limited' ? 'bg-red-50/50' : ''}>
-                  <td className="px-4 py-2 text-xs text-stone-400">
+                <tr key={i} className={row.operation === 'rate_limited' ? 'bg-red-950/30' : ''}>
+                  <td className="px-4 py-2 font-mono text-xs text-shadow">
                     {new Date(row.created_at).toLocaleString()}
                   </td>
-                  <td className="px-4 py-2 text-stone-700">{row.provider}</td>
-                  <td className={`px-4 py-2 ${row.operation === 'rate_limited' ? 'font-medium text-red-600' : 'text-stone-600'}`}>
+                  <td className="px-4 py-2 font-mono text-xs text-mist">{row.provider}</td>
+                  <td className={`px-4 py-2 font-mono text-xs ${row.operation === 'rate_limited' ? 'text-red-400' : 'text-mist'}`}>
                     {row.operation}
                   </td>
-                  <td className="px-4 py-2 text-right text-stone-600">{fmt(row.tokens_in ?? 0)}</td>
-                  <td className="px-4 py-2 text-right text-stone-600">{fmt(row.tokens_out ?? 0)}</td>
+                  <td className="px-4 py-2 text-right font-mono text-xs text-shadow">{fmt(row.tokens_in ?? 0)}</td>
+                  <td className="px-4 py-2 text-right font-mono text-xs text-shadow">{fmt(row.tokens_out ?? 0)}</td>
                 </tr>
               ))}
               {recent.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-6 text-center text-stone-400">No calls yet</td></tr>
+                <tr><td colSpan={5} className="px-4 py-6 text-center font-mono text-xs text-shadow">No calls yet</td></tr>
               )}
             </tbody>
           </table>

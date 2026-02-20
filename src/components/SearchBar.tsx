@@ -76,35 +76,35 @@ export default function SearchBar() {
         value={query}
         onChange={(e) => handleChange(e.target.value)}
         placeholder="Search..."
-        className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
+        className="w-full bg-void border border-seam px-3 py-2 font-mono text-xs text-parchment placeholder:text-shadow focus:border-gold focus:outline-none transition-colors"
       />
 
       {open && results.length > 0 && (
-        <div className="absolute z-20 mt-1 w-full rounded-md border border-stone-200 bg-white shadow-lg">
+        <div className="absolute z-20 mt-1 w-full border border-seam bg-ink shadow-xl">
           {results.map((result) => (
             <button
               key={result.id}
               onClick={() => handleSelect(result)}
-              className="flex w-full flex-col gap-1 border-b border-stone-100 px-3 py-2 text-left last:border-0 hover:bg-stone-50"
+              className="flex w-full flex-col gap-1 border-b border-seam px-3 py-2 text-left last:border-0 hover:bg-quill transition-colors"
             >
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-stone-700">
+                <span className="font-mono text-xs text-mist">
                   @{result.author_handle}
                 </span>
                 {result.collections?.name && (
-                  <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-500">
+                  <span className="font-mono text-xs text-shadow border border-seam px-2 py-0.5">
                     {result.collections.name}
                   </span>
                 )}
               </div>
-              <p className="line-clamp-1 text-xs text-stone-500">{result.content}</p>
+              <p className="line-clamp-1 text-xs text-shadow">{result.content}</p>
             </button>
           ))}
         </div>
       )}
 
       {open && query.trim() && results.length === 0 && (
-        <div className="absolute z-20 mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-4 text-center text-sm text-stone-500 shadow-lg">
+        <div className="absolute z-20 mt-1 w-full border border-seam bg-ink px-3 py-4 text-center font-mono text-xs text-shadow shadow-xl">
           No results found
         </div>
       )}

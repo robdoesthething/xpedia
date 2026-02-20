@@ -45,18 +45,18 @@ export default async function CollectionDetailPage({
     <div>
       <Link
         href="/dashboard"
-        className="mb-6 inline-flex items-center text-sm text-stone-500 hover:text-stone-700"
+        className="mb-6 inline-flex items-center font-mono text-xs tracking-widest text-shadow uppercase hover:text-mist transition-colors"
       >
-        &larr; Back to collections
+        &larr; Collections
       </Link>
 
-      <div className="mb-6 flex items-start justify-between">
+      <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-stone-900">{collection.name}</h1>
-          <span className="mt-1 inline-block rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600">
+          <h1 className="font-serif text-4xl text-parchment">{collection.name}</h1>
+          <span className="mt-2 inline-block font-mono text-xs tracking-widest text-shadow uppercase">
             {collection.type}
           </span>
-          <div className="mt-2">
+          <div className="mt-4">
             <CollectionActions
               collectionId={collection.id}
               initialName={collection.name}
@@ -68,16 +68,16 @@ export default async function CollectionDetailPage({
       </div>
 
       {collection.ai_summary && (
-        <div className="mb-6 rounded-lg border border-stone-200 bg-white p-4">
-          <h2 className="mb-2 text-sm font-semibold text-stone-900">Summary</h2>
-          <p className="text-sm leading-relaxed text-stone-600">{collection.ai_summary}</p>
+        <div className="mb-6 border border-seam bg-ink p-5">
+          <h2 className="mb-3 font-mono text-xs tracking-widest text-gold uppercase">Summary</h2>
+          <p className="text-sm leading-relaxed text-mist">{collection.ai_summary}</p>
         </div>
       )}
 
       {collection.ai_conclusions && collection.ai_conclusions.length > 0 && (
-        <div className="mb-6 rounded-lg border border-stone-200 bg-white p-4">
-          <h2 className="mb-2 text-sm font-semibold text-stone-900">Actionable Conclusions</h2>
-          <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-stone-600">
+        <div className="mb-6 border border-seam bg-ink p-5">
+          <h2 className="mb-3 font-mono text-xs tracking-widest text-gold uppercase">Actionable Conclusions</h2>
+          <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-mist">
             {collection.ai_conclusions.map((conclusion, i) => (
               <li key={i}>{conclusion}</li>
             ))}
@@ -85,21 +85,21 @@ export default async function CollectionDetailPage({
         </div>
       )}
 
-      <hr className="my-6 border-stone-200" />
+      <div className="my-8 border-t border-seam" />
 
-      <h2 className="mb-4 text-lg font-semibold text-stone-900">
+      <h2 className="mb-4 font-mono text-xs tracking-widest text-shadow uppercase">
         Items ({tweets.length})
       </h2>
 
       {tweets.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-stone-300 p-8 text-center">
-          <p className="text-sm text-stone-500">No items in this collection yet.</p>
-          <p className="mt-2 text-sm text-stone-400">
+        <div className="border border-dashed border-seam p-8 text-center">
+          <p className="text-sm text-mist">No items in this collection yet.</p>
+          <p className="mt-2 text-sm text-shadow">
             Go to{' '}
-            <Link href="/dashboard/tweets" className="font-medium text-amber-600 hover:text-amber-700">
-              Recent Tweets
+            <Link href="/dashboard/tweets" className="font-medium text-gold hover:text-gold-bright transition-colors">
+              Uncategorized
             </Link>
-            {' '}and use &ldquo;Move to&hellip;&rdquo; to add tweets here.
+            {' '}and use &ldquo;Move to&hellip;&rdquo; to add items here.
           </p>
         </div>
       ) : (

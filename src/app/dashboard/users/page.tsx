@@ -38,8 +38,8 @@ export default async function UsersPage() {
   if (tweets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <h2 className="text-xl font-semibold text-gray-900">No users yet</h2>
-        <p className="mt-2 max-w-md text-sm text-gray-500">
+        <h2 className="font-serif text-3xl text-parchment">No users yet</h2>
+        <p className="mt-3 max-w-md text-sm text-mist">
           Capture tweets to see the authors here, grouped by topic.
         </p>
       </div>
@@ -48,7 +48,6 @@ export default async function UsersPage() {
 
   const collectionMap = new Map(collections.map((c) => [c.id, c.name]));
 
-  // Group tweets by author and count per collection
   const authorMap = new Map<string, {
     name: string | null;
     total: number;
@@ -73,7 +72,6 @@ export default async function UsersPage() {
     }
   }
 
-  // Build author list with top collection
   const authors: AuthorInfo[] = [];
   for (const [handle, data] of authorMap) {
     let topCollectionId: string | null = null;
@@ -93,10 +91,8 @@ export default async function UsersPage() {
     });
   }
 
-  // Sort by tweet count descending
   authors.sort((a, b) => b.tweetCount - a.tweetCount);
 
-  // Group by top collection
   const grouped = new Map<string, AuthorInfo[]>();
   const uncategorizedAuthors: AuthorInfo[] = [];
 
@@ -110,19 +106,18 @@ export default async function UsersPage() {
     }
   }
 
-  // Sort groups alphabetically
   const sortedGroups = [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b));
 
   return (
     <div>
-      <h2 className="mb-6 text-xl font-semibold text-gray-900">
+      <h2 className="mb-8 font-serif text-3xl text-parchment">
         Users ({authors.length})
       </h2>
 
       <div className="space-y-8">
         {sortedGroups.map(([collectionName, groupAuthors]) => (
           <section key={collectionName}>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+            <h3 className="mb-3 font-mono text-xs tracking-widest text-gold uppercase">
               {collectionName}
             </h3>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -130,18 +125,18 @@ export default async function UsersPage() {
                 <Link
                   key={author.handle}
                   href={`/dashboard/users/${encodeURIComponent(author.handle)}`}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm transition-shadow hover:shadow-md"
+                  className="flex items-center justify-between border border-seam bg-ink px-4 py-3 transition-colors hover:border-gold/40 hover:bg-quill"
                 >
                   <div>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-sm text-parchment">
                       {author.name ?? `@${author.handle}`}
                     </span>
                     {author.name && (
-                      <span className="ml-2 text-sm text-gray-500">@{author.handle}</span>
+                      <span className="ml-2 font-mono text-xs text-shadow">@{author.handle}</span>
                     )}
                   </div>
-                  <span className="text-xs text-gray-400">
-                    {author.tweetCount} {author.tweetCount === 1 ? 'tweet' : 'tweets'}
+                  <span className="font-mono text-xs text-shadow">
+                    {author.tweetCount}
                   </span>
                 </Link>
               ))}
@@ -151,7 +146,7 @@ export default async function UsersPage() {
 
         {uncategorizedAuthors.length > 0 && (
           <section>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+            <h3 className="mb-3 font-mono text-xs tracking-widest text-shadow uppercase">
               Uncategorized
             </h3>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -159,18 +154,18 @@ export default async function UsersPage() {
                 <Link
                   key={author.handle}
                   href={`/dashboard/users/${encodeURIComponent(author.handle)}`}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm transition-shadow hover:shadow-md"
+                  className="flex items-center justify-between border border-seam bg-ink px-4 py-3 transition-colors hover:border-gold/40 hover:bg-quill"
                 >
                   <div>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-sm text-parchment">
                       {author.name ?? `@${author.handle}`}
                     </span>
                     {author.name && (
-                      <span className="ml-2 text-sm text-gray-500">@{author.handle}</span>
+                      <span className="ml-2 font-mono text-xs text-shadow">@{author.handle}</span>
                     )}
                   </div>
-                  <span className="text-xs text-gray-400">
-                    {author.tweetCount} {author.tweetCount === 1 ? 'tweet' : 'tweets'}
+                  <span className="font-mono text-xs text-shadow">
+                    {author.tweetCount}
                   </span>
                 </Link>
               ))}

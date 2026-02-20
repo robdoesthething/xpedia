@@ -26,9 +26,9 @@ export default function TweetListWithMove({
   if (tweets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <h2 className="text-xl font-semibold text-gray-900">No uncategorized tweets</h2>
-        <p className="mt-2 max-w-md text-sm text-gray-500">
-          All your tweets have been organized into collections.
+        <h2 className="font-serif text-2xl text-parchment">No uncategorized items</h2>
+        <p className="mt-3 max-w-md text-sm text-mist">
+          All your items have been organized into collections.
         </p>
       </div>
     );

@@ -25,13 +25,13 @@ export default function ExportButtons({ markdown, filename }: { markdown: string
     <div className="flex gap-2">
       <button
         onClick={handleCopy}
-        className="rounded-md px-3 py-1.5 text-sm font-medium text-stone-600 hover:bg-stone-100"
+        className="font-mono text-xs tracking-widest text-mist uppercase hover:text-parchment transition-colors px-3 py-1.5"
       >
         {copied ? 'Copied!' : 'Copy'}
       </button>
       <button
         onClick={handleDownload}
-        className="rounded-md bg-amber-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-600"
+        className="bg-gold text-void font-mono text-xs tracking-widest uppercase px-3 py-1.5 hover:bg-gold-bright transition-colors"
       >
         Export .md
       </button>
