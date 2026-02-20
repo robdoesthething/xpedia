@@ -19,9 +19,11 @@ export interface CapturedTweet {
 }
 
 export async function fetchSavedUrls(token: string): Promise<string[]> {
-  const res = await fetch(`${API_BASE}/api/tweets/urls`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  // Pass token as query param (not Authorization header) so this GET is a
+  // "simple" CORS request with no custom headers — avoids preflight entirely.
+  const res = await fetch(
+    `${API_BASE}/api/tweets/urls?access_token=${encodeURIComponent(token)}`
+  );
 
   if (!res.ok) return [];
 
