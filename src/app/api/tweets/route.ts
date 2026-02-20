@@ -2,7 +2,7 @@ import { NextRequest, after } from 'next/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createClientFromToken } from '@/lib/supabase/api';
-import { corsHeaders, corsOptions } from '@/lib/cors';
+import { getCorsHeaders, corsOptions } from '@/lib/cors';
 import { aiRouter } from '@/lib/ai-router';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
 import { enrichArticleUrl } from '@/lib/article-enricher';
@@ -10,8 +10,8 @@ import type { CapturedTweet } from '@/types/database';
 
 const MAX_TWEETS_PER_REQUEST = 100;
 
-export async function OPTIONS() {
-  return corsOptions();
+export async function OPTIONS(request: NextRequest) {
+  return corsOptions(request);
 }
 
 /**
@@ -22,10 +22,12 @@ export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('Authorization');
   const token = authHeader?.replace('Bearer ', '');
 
+  const cors = getCorsHeaders(request);
+
   if (!token) {
     return Response.json(
       { error: 'Missing Authorization header' },
-      { status: 401, headers: corsHeaders }
+      { status: 401, headers: cors }
     );
   }
 
@@ -37,27 +39,27 @@ export async function POST(request: NextRequest) {
 
   if (authError || !user) {
     console.error('[Capture] Auth failed:', authError?.message);
-    return Response.json({ error: 'Unauthorized' }, { status: 401, headers: corsHeaders });
+    return Response.json({ error: 'Unauthorized' }, { status: 401, headers: cors });
   }
 
   let body: { tweets: CapturedTweet[] };
   try {
     body = await request.json();
   } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400, headers: corsHeaders });
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400, headers: cors });
   }
 
   if (!Array.isArray(body.tweets) || body.tweets.length === 0) {
     return Response.json(
       { error: 'tweets must be a non-empty array' },
-      { status: 400, headers: corsHeaders }
+      { status: 400, headers: cors }
     );
   }
 
   if (body.tweets.length > MAX_TWEETS_PER_REQUEST) {
     return Response.json(
       { error: `Maximum ${MAX_TWEETS_PER_REQUEST} tweets per request` },
-      { status: 400, headers: corsHeaders }
+      { status: 400, headers: cors }
     );
   }
 
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
     console.error('[Capture] DB insert error:', error.message);
     return Response.json(
       { error: 'Failed to save tweets' },
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: cors }
     );
   }
 
@@ -105,7 +107,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  return Response.json({ saved, duplicates }, { headers: corsHeaders });
+  return Response.json({ saved, duplicates }, { headers: cors });
 }
 
 /**

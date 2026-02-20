@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export const maxDuration = 60;
 
@@ -21,6 +22,15 @@ export async function POST(
 
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // 5 regenerations per minute per user
+  const rl = checkRateLimit(`regenerate:${user.id}`, 5, 60_000);
+  if (!rl.allowed) {
+    return Response.json(
+      { error: 'Too many requests. Please wait before regenerating again.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
+    );
   }
 
   // Verify the collection belongs to the user

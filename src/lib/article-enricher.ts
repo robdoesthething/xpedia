@@ -1,3 +1,23 @@
+// Private/internal IP ranges that must not be fetched (SSRF prevention)
+const BLOCKED_HOSTNAMES = ['localhost', '0.0.0.0'];
+const BLOCKED_IP_PREFIXES = ['127.', '10.', '192.168.', '169.254.', '::1', 'fc', 'fd'];
+
+function isSafeUrl(rawUrl: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(rawUrl);
+    if (protocol !== 'https:' && protocol !== 'http:') return false;
+    const host = hostname.toLowerCase();
+    if (BLOCKED_HOSTNAMES.includes(host)) return false;
+    if (BLOCKED_IP_PREFIXES.some((p) => host.startsWith(p))) return false;
+    // Block 172.16.0.0/12 range
+    const m = host.match(/^172\.(\d+)\./);
+    if (m && Number(m[1]) >= 16 && Number(m[1]) <= 31) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Fetches a URL and extracts og:title / og:description via regex.
  * Never throws — returns nulls on any failure.
@@ -5,6 +25,11 @@
 export async function enrichArticleUrl(
   url: string
 ): Promise<{ title: string | null; description: string | null }> {
+  if (!isSafeUrl(url)) {
+    console.warn('[Enricher] Blocked unsafe URL:', url);
+    return { title: null, description: null };
+  }
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);

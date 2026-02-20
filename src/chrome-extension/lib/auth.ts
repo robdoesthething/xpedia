@@ -27,7 +27,8 @@ export async function signIn(
   });
 
   if (!res.ok) {
-    const body = await res.json();
+    let body: { error_description?: string; msg?: string } = {};
+    try { body = await res.json(); } catch { /* empty body */ }
     return { error: body.error_description || body.msg || 'Sign in failed' };
   }
 

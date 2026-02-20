@@ -10,7 +10,7 @@
     "type-check": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build:extension": "tsc -p src/chrome-extension/tsconfig.json && cp src/chrome-extension/manifest.json src/chrome-extension/popup.html dist/chrome-extension/"
+    "build:extension": "node scripts/generate-extension-config.js && tsc -p src/chrome-extension/tsconfig.json && npx esbuild src/chrome-extension/content.ts --bundle --outfile=dist/chrome-extension/content.js --platform=browser --target=chrome120 && cp src/chrome-extension/manifest.json src/chrome-extension/popup.html dist/chrome-extension/"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
@@ -25,6 +25,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.27.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "eslint-config-prettier": "^10.1.8",
