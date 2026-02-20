@@ -20,7 +20,6 @@ export default function TweetCard({
       })
     : null;
 
-  // Use the first sentence or first 120 chars of content as a headline
   const firstSentenceEnd = tweet.content.search(/[.!?]\s/);
   const headline =
     firstSentenceEnd > 0 && firstSentenceEnd <= 120
@@ -49,20 +48,20 @@ export default function TweetCard({
   }
 
   return (
-    <article className="rounded-lg border border-gray-200 bg-white shadow-sm">
+    <article className="rounded-lg border border-stone-200 bg-white">
       <div className="p-5">
         {/* Header: Headline + Type badge */}
         <div className="flex items-start justify-between gap-3">
-          <h3 className="text-base font-semibold leading-snug text-gray-900">
+          <h3 className="text-base font-semibold leading-snug text-stone-900">
             {headline}
           </h3>
           {tweet.content_type === 'thread' && (
-            <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+            <span className="shrink-0 rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
               Thread
             </span>
           )}
           {tweet.content_type === 'article' && (
-            <span className="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+            <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
               Article
             </span>
           )}
@@ -70,7 +69,7 @@ export default function TweetCard({
 
         {/* Body */}
         {body && (
-          <p className="mt-2 text-sm leading-relaxed text-gray-600 line-clamp-3">
+          <p className="mt-2 text-sm leading-relaxed text-stone-600 line-clamp-3">
             {body}
           </p>
         )}
@@ -92,7 +91,7 @@ export default function TweetCard({
 
         {/* AI Summary */}
         {tweet.ai_summary && (
-          <p className="mt-3 border-l-2 border-blue-200 pl-3 text-sm italic text-gray-500">
+          <p className="mt-3 border-l-2 border-amber-200 pl-3 text-sm italic text-stone-500">
             {tweet.ai_summary}
           </p>
         )}
@@ -103,18 +102,18 @@ export default function TweetCard({
             href={tweet.article_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 block rounded border border-gray-200 p-3 hover:bg-gray-50"
+            className="mt-3 block rounded border border-stone-200 p-3 hover:bg-stone-50"
           >
-            <p className="text-sm font-semibold text-gray-800 leading-snug">
+            <p className="text-sm font-semibold leading-snug text-stone-800">
               {tweet.article_title}
             </p>
             {tweet.article_description && (
-              <p className="mt-1 text-xs text-gray-500 line-clamp-2">
+              <p className="mt-1 text-xs text-stone-500 line-clamp-2">
                 {tweet.article_description}
               </p>
             )}
             {articleDomain && (
-              <p className="mt-1 text-xs text-blue-600">
+              <p className="mt-1 text-xs text-amber-600">
                 {articleDomain} &rarr;
               </p>
             )}
@@ -133,9 +132,9 @@ export default function TweetCard({
                 : `Show thread (${threadTweets.length})`}
             </button>
             {threadExpanded && (
-              <div className="mt-2 border-l-2 border-purple-200 pl-3 flex flex-col gap-2">
+              <div className="mt-2 flex flex-col gap-2 border-l-2 border-purple-200 pl-3">
                 {threadTweets.map((t, i) => (
-                  <p key={i} className="text-sm text-gray-700 leading-relaxed">
+                  <p key={i} className="text-sm leading-relaxed text-stone-700">
                     {t.content}
                   </p>
                 ))}
@@ -146,15 +145,15 @@ export default function TweetCard({
       </div>
 
       {/* Footer — byline + actions */}
-      <div className="flex items-center justify-between border-t border-gray-100 px-5 py-3">
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <span className="font-medium text-gray-700">
+      <div className="flex items-center justify-between border-t border-stone-100 px-5 py-3">
+        <div className="flex items-center gap-2 text-xs text-stone-500">
+          <span className="font-medium text-stone-700">
             {tweet.author_name ?? `@${tweet.author_handle}`}
           </span>
           {tweet.author_name && <span>@{tweet.author_handle}</span>}
           {displayDate && (
             <>
-              <span className="text-gray-300">&middot;</span>
+              <span className="text-stone-300">&middot;</span>
               <span>{displayDate}</span>
             </>
           )}
@@ -164,7 +163,7 @@ export default function TweetCard({
             href={tweet.tweet_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs font-medium text-blue-600 hover:text-blue-800"
+            className="text-xs font-medium text-amber-600 hover:text-amber-700"
           >
             View on X &rarr;
           </a>

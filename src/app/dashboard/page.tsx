@@ -15,8 +15,8 @@ export default async function DashboardPage() {
   if (!collections || collections.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <h2 className="text-xl font-semibold text-gray-900">No collections yet</h2>
-        <p className="mt-2 max-w-md text-sm text-gray-500">
+        <h2 className="text-xl font-semibold text-stone-900">No collections yet</h2>
+        <p className="mt-2 max-w-md text-sm text-stone-500">
           Install the Chrome extension and capture your first bookmarks. They&apos;ll be
           automatically organized into collections here.
         </p>
@@ -30,7 +30,7 @@ export default async function DashboardPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900">Your Collections</h2>
+        <h2 className="text-xl font-semibold text-stone-900">Your Collections</h2>
         <NewCollectionButton />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

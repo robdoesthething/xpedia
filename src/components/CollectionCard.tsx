@@ -13,20 +13,24 @@ export default function CollectionCard({ collection }: { collection: Collection 
   return (
     <Link
       href={`/dashboard/collection/${collection.id}`}
-      className="block rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+      className="block rounded-lg border border-stone-200 bg-white p-5 transition-colors hover:border-amber-300 hover:bg-amber-50/30"
     >
-      <div className="flex items-start justify-between">
-        <h3 className="font-semibold text-gray-900">{collection.name}</h3>
-        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="font-semibold leading-snug text-stone-900">{collection.name}</h3>
+        <span className="shrink-0 rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-500">
           {collection.type}
         </span>
       </div>
-      {collection.description && (
-        <p className="mt-1 text-sm text-gray-500 line-clamp-2">{collection.description}</p>
+
+      {(collection.description ?? collection.ai_summary) && (
+        <p className="mt-2 text-sm leading-relaxed text-stone-500 line-clamp-2">
+          {collection.description ?? collection.ai_summary}
+        </p>
       )}
-      <div className="mt-4 flex items-center justify-between text-xs text-gray-400">
+
+      <div className="mt-4 flex items-center justify-between text-xs text-stone-400">
         <span>
-          {collection.tweet_count} {collection.tweet_count === 1 ? 'tweet' : 'tweets'}
+          {collection.tweet_count} {collection.tweet_count === 1 ? 'item' : 'items'}
         </span>
         <span>Updated {formatDate(collection.updated_at)}</span>
       </div>

@@ -59,16 +59,16 @@ export default function NewCollectionModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+          className="absolute right-3 top-3 text-stone-400 hover:text-stone-600"
         >
           &times;
         </button>
 
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">New Collection</h2>
+        <h2 className="mb-4 text-lg font-semibold text-stone-900">New Collection</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="collection-name" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="collection-name" className="block text-sm font-medium text-stone-700">
               Name
             </label>
             <input
@@ -79,33 +79,33 @@ export default function NewCollectionModal({
               maxLength={100}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 text-sm focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400"
               placeholder="e.g. Side Project Ideas"
             />
           </div>
 
           <fieldset>
-            <legend className="block text-sm font-medium text-gray-700">Type</legend>
+            <legend className="block text-sm font-medium text-stone-700">Type</legend>
             <div className="mt-2 flex gap-4">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-stone-700">
                 <input
                   type="radio"
                   name="type"
                   value="topic"
                   checked={type === 'topic'}
                   onChange={() => setType('topic')}
-                  className="text-blue-600 focus:ring-blue-500"
+                  className="text-amber-500 focus:ring-amber-400"
                 />
                 Topic
               </label>
-              <label className="flex items-center gap-2 text-sm text-gray-700">
+              <label className="flex items-center gap-2 text-sm text-stone-700">
                 <input
                   type="radio"
                   name="type"
                   value="project"
                   checked={type === 'project'}
                   onChange={() => setType('project')}
-                  className="text-blue-600 focus:ring-blue-500"
+                  className="text-amber-500 focus:ring-amber-400"
                 />
                 Project
               </label>
@@ -117,7 +117,7 @@ export default function NewCollectionModal({
           <button
             type="submit"
             disabled={loading || !name.trim()}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            className="w-full rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 disabled:opacity-50"
           >
             {loading ? 'Creating...' : 'Create Collection'}
           </button>

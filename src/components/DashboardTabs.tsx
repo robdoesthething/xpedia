@@ -26,8 +26,8 @@ export default function DashboardTabs() {
             href={tab.href}
             className={`border-b-2 px-1 py-3 text-sm font-medium transition-colors ${
               isActive
-                ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                ? 'border-amber-500 text-stone-900'
+                : 'border-transparent text-stone-500 hover:border-stone-300 hover:text-stone-700'
             }`}
           >
             {tab.label}
