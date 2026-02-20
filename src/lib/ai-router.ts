@@ -203,15 +203,14 @@ Respond with ONLY valid JSON: {"collection_name": "...", "summary": "..."}`;
     const messages: ChatMessage[] = [
       {
         role: 'system',
-        content: `You write concise, actionable knowledge summaries from curated tweet collections.
+        content: `You extract and preserve the most valuable knowledge from curated tweet collections.
 
-Write a 2-4 paragraph summary for the "${collectionName}" collection that someone could use as a reference guide. Focus on:
-- Specific techniques, frameworks, or mental models mentioned across tweets
-- Concrete numbers, benchmarks, or thresholds people cite
-- Points of consensus vs. notable contrarian views
-- What practitioners actually DO vs. what they say in theory
-
-Do NOT list individual tweets. Synthesize into a cohesive knowledge brief that reads like a practitioner's field notes.`,
+Write a reference summary for the "${collectionName}" collection. Rules:
+- Read every tweet carefully. If a tweet contains a reusable prompt, script, template, formula, or step-by-step process — quote it VERBATIM inside a blockquote (>). Do not paraphrase things that are more valuable in their original words.
+- Surface specific techniques, exact numbers, named frameworks, and concrete examples — not vague descriptions of them.
+- Note points of consensus and any notable contrarian takes.
+- Do NOT write in vague generalities. A reader should be able to act on this immediately.
+- Length: as long as needed to capture everything valuable — do not truncate to seem concise.`,
       },
       {
         role: 'user',
@@ -219,7 +218,7 @@ Do NOT list individual tweets. Synthesize into a cohesive knowledge brief that r
       },
     ];
 
-    const result = await callWithRotation(SUMMARY_PROVIDERS, messages, 600);
+    const result = await callWithRotation(SUMMARY_PROVIDERS, messages, 1200);
     if (!result) return null;
     return result.content.trim();
   },
@@ -240,13 +239,14 @@ Do NOT list individual tweets. Synthesize into a cohesive knowledge brief that r
         role: 'system',
         content: `You extract specific, actionable conclusions from curated tweet collections.
 
-Given tweets in the "${collectionName}" collection, produce 3-7 conclusions. Each MUST be:
-- A specific action someone can take THIS WEEK (not vague advice)
-- Include concrete details: tools, numbers, steps, or frameworks
-  GOOD: "Use the STAR framework (Situation, Task, Action, Result) when writing cold outreach — it converts 3x better than feature-listing"
+Given tweets in the "${collectionName}" collection, produce 3-7 conclusions. Rules:
+- Each must be a specific action someone can take THIS WEEK — not vague advice.
+- If a tweet contains a ready-to-use prompt, script, or template, include it verbatim inside the conclusion string (use quotes or a colon to introduce it). Do not summarize it away.
+- Include concrete details: exact tools, numbers, steps, or named frameworks.
+  GOOD: "Use the STAR framework when writing cold outreach: 'Situation → Task → Action → Result' — converts 3x better than feature-listing"
   BAD: "Write better cold emails"
-  GOOD: "Set up a weekly 15-min review of your top 5 metrics dashboard every Monday morning"
-  BAD: "Track your metrics regularly"
+  GOOD: "Run this ChatGPT prompt to audit your pricing page: [exact prompt from tweet]"
+  BAD: "Use AI to improve your pricing"
 
 Return ONLY a JSON array of strings: ["conclusion 1", "conclusion 2", ...]`,
       },
@@ -256,7 +256,7 @@ Return ONLY a JSON array of strings: ["conclusion 1", "conclusion 2", ...]`,
       },
     ];
 
-    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 400);
+    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 800);
     if (!result) return null;
 
     try {
