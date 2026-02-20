@@ -41,3 +41,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# chrome extension — generated config contains credentials
+src/chrome-extension/lib/config.ts

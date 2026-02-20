@@ -2,6 +2,7 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { aiRouter } from '@/lib/ai-router';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export const maxDuration = 60;
 
@@ -19,6 +20,15 @@ export async function POST() {
 
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // 3 categorize calls per minute per user
+  const rl = checkRateLimit(`categorize:${user.id}`, 3, 60_000);
+  if (!rl.allowed) {
+    return Response.json(
+      { error: 'Too many requests. Please wait before categorizing again.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
+    );
   }
 
   // Fetch uncategorized tweets with rich fields

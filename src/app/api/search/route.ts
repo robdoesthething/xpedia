@@ -23,6 +23,7 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from('tweets')
     .select('id, author_handle, content, tweet_url, collection_id, collections(name)')
+    .eq('user_id', user.id)
     .textSearch('search_vector', q, { type: 'websearch' })
     .range(offset, offset + limit - 1);
 

@@ -10,7 +10,7 @@
     "type-check": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build:extension": "tsc -p src/chrome-extension/tsconfig.json && cp src/chrome-extension/manifest.json src/chrome-extension/popup.html dist/chrome-extension/"
+    "build:extension": "node scripts/generate-extension-config.js && tsc -p src/chrome-extension/tsconfig.json && cp src/chrome-extension/manifest.json src/chrome-extension/popup.html dist/chrome-extension/"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
