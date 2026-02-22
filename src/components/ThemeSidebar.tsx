@@ -44,15 +44,21 @@ export default function ThemeSidebar({ themes, uncategorized }: Props) {
         const isOpen = expanded.has(theme.id);
         return (
           <div key={theme.id} className="mb-1">
-            <button
-              onClick={() => toggle(theme.id)}
-              className="flex w-full items-center justify-between px-2 py-1.5 text-left font-mono text-xs tracking-widest text-mist uppercase hover:text-parchment transition-colors"
-            >
-              <span className="truncate">{theme.name}</span>
-              <span className="ml-1 shrink-0 text-shadow">
+            <div className="flex w-full items-center justify-between">
+              <Link
+                href={`/dashboard/theme/${theme.id}`}
+                className="flex-1 truncate px-2 py-1.5 font-mono text-xs tracking-widest text-mist uppercase hover:text-parchment transition-colors"
+              >
+                {theme.name}
+              </Link>
+              <button
+                onClick={() => toggle(theme.id)}
+                className="shrink-0 px-2 py-1.5 text-shadow hover:text-parchment transition-colors"
+                aria-label={isOpen ? 'Collapse' : 'Expand'}
+              >
                 {isOpen ? '▾' : '▸'}
-              </span>
-            </button>
+              </button>
+            </div>
 
             {isOpen && (
               <div className="ml-2 mt-0.5 border-l border-seam pl-2">
