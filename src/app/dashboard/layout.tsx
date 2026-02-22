@@ -13,11 +13,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const supabase = await createClient();
 
   // Fetch all collections with their theme info in one query
-  const { data: collections } = await supabase
+  const { data: collections, error } = await supabase
     .from('collections')
     .select('*, themes(id, name, created_at, updated_at)')
     .order('name')
     .returns<(Collection & { themes: Theme | null })[]>();
+
+  if (error) console.error('[DB] Error fetching collections for sidebar:', error.message);
 
   const allCollections = collections ?? [];
 

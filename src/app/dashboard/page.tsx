@@ -6,11 +6,13 @@ import type { Collection, Theme } from '@/types/database';
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const { data: collections } = await supabase
+  const { data: collections, error } = await supabase
     .from('collections')
     .select('*, themes(id, name, created_at, updated_at)')
     .order('name')
     .returns<(Collection & { themes: Theme | null })[]>();
+
+  if (error) console.error('[DB] Error fetching collections:', error.message);
 
   const allCollections = collections ?? [];
 
