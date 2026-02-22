@@ -393,4 +393,79 @@ Return ONLY a JSON array: [{"handle": "username_without_@", "reason": "..."}, ..
     }
   },
 
+  async generateInsights(
+    tweets: { author_handle: string; content: string }[],
+    userId?: string
+  ): Promise<string[] | null> {
+    const tweetBlock = tweets.map((t, i) => `${i + 1}. @${t.author_handle}: ${t.content}`).join('\n');
+
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: `You synthesise a theme-level knowledge brief from curated tweets across multiple collections.
+
+Produce 5-10 actionable insights. Rules:
+- Each insight must be something a reader can act on THIS WEEK.
+- Include specific tools, frameworks, numbers, or scripts where the tweets contain them.
+- Cross-reference ideas that appear in multiple tweets — consensus is more valuable.
+- Flag any notable contrarian or surprising findings.
+
+Return ONLY a JSON array of strings: ["insight 1", "insight 2", ...]`,
+      },
+      { role: 'user', content: tweetBlock },
+    ];
+
+    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 1000);
+    if (!result) return null;
+
+    logAiCall({ userId, provider: result.provider, operation: 'insights', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
+
+    try {
+      const parsed = JSON.parse(cleanJson(result.content));
+      if (!Array.isArray(parsed)) return null;
+      return parsed.map(String);
+    } catch {
+      console.error('[AI] Failed to parse insights JSON:', result.content);
+      return null;
+    }
+  },
+
+  async generateDigest(
+    tweets: { author_handle: string; content: string }[],
+    userId?: string
+  ): Promise<{ kta: string[]; new_voices: { handle: string; reason: string }[] } | null> {
+    const tweetBlock = tweets.map((t, i) => `${i + 1}. @${t.author_handle}: ${t.content}`).join('\n');
+
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: `You write a concise digest of newly added tweets — like a newsletter entry for what's new.
+
+Return JSON with exactly two keys:
+- "kta": array of 3-5 key takeaways and actions from these specific new tweets
+- "new_voices": array of up to 3 new contributors worth noting (people whose ideas stood out in this batch), each as {"handle": "...", "reason": "..."}
+
+Return ONLY valid JSON: {"kta": [...], "new_voices": [...]}`,
+      },
+      { role: 'user', content: tweetBlock },
+    ];
+
+    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 600);
+    if (!result) return null;
+
+    logAiCall({ userId, provider: result.provider, operation: 'digest', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
+
+    try {
+      const parsed = JSON.parse(cleanJson(result.content));
+      if (!parsed.kta || !parsed.new_voices) return null;
+      return {
+        kta: Array.isArray(parsed.kta) ? parsed.kta.map(String) : [],
+        new_voices: Array.isArray(parsed.new_voices) ? parsed.new_voices : [],
+      };
+    } catch {
+      console.error('[AI] Failed to parse digest JSON:', result.content);
+      return null;
+    }
+  },
+
 };
