@@ -107,7 +107,8 @@ When performing code reviews or refactoring:
 
 - This is a TypeScript-first codebase. Always use TypeScript (.ts/.tsx) for new files.
 - Prefer strict typing — avoid `any`. Use `unknown` + type guards when types are uncertain.
-- After editing multiple files, run `tsc --noEmit` to verify type correctness.
+- **Run `npm run type-check` after every TypeScript edit** — not just after multi-file refactors. Fix all errors before moving on.
+- Do not batch more than 5–6 file edits without an intermediate type check. Type errors compound across files and become harder to isolate.
 
 ## Key Conventions
 
@@ -411,9 +412,10 @@ When making changes across 3+ files:
 
 1. Read all affected files first before editing any
 2. Make changes in dependency order (lib → components → pages)
-3. Run type checker after all edits
+3. **Run `npm run type-check` after every 5–6 edits** — do not wait until all files are done
 4. Run tests if available
-5. Summarize all changed files at the end
+5. Verify build succeeds with `npm run build` before committing
+6. Summarize all changed files at the end
 
 ## Testing Strategy
 
@@ -468,6 +470,43 @@ npm run test:e2e:ui    # Interactive mode
 - [ ] No console errors in production build
 - [ ] Environment variables set in Vercel
 - [ ] Database migrations run (if needed)
+
+## SQL Migration Rules
+
+When writing or reviewing SQL migrations for Supabase/PostgreSQL:
+
+1. **Never use `CREATE POLICY IF NOT EXISTS`** — this is invalid PostgreSQL syntax. Use the correct pattern:
+
+   ```sql
+   -- Correct pattern
+   DROP POLICY IF EXISTS "policy name" ON table_name;
+   CREATE POLICY "policy name" ON table_name ...;
+   ```
+
+2. **Handle duplicate key constraints** with `ON CONFLICT`:
+
+   ```sql
+   -- Bad: will error if row exists
+   INSERT INTO users (id, email) VALUES (...);
+
+   -- Good: upsert safely
+   INSERT INTO users (id, email) VALUES (...)
+   ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;
+   ```
+
+3. **Always test migrations** with a `BEGIN; ... ROLLBACK;` block before running for real.
+
+4. **RLS policy order matters**: drop old policies before creating new ones to avoid conflicts.
+
+## Debugging
+
+When a bug or unexpected behavior is reported, always check environment variables **before** investigating code logic:
+
+1. **Read `.env.local`** and compare against what's configured in Vercel (`vercel env ls`)
+2. **Check for URL mismatches** — local `localhost` vs production Supabase/API URLs are a frequent root cause
+3. **Verify required keys are set** — missing `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, or AI provider keys will cause silent failures
+4. **For AI provider issues**, check which provider the `AIRouter` last attempted — log `result.provider` to identify rate-limit or key problems
+5. Only after confirming env vars are correct, investigate code logic
 
 ## Gotchas & Pitfalls
 
