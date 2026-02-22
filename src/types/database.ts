@@ -9,6 +9,10 @@ export interface Theme {
   id: string;
   user_id: string;
   name: string;
+  ai_insights: string[] | null;
+  ai_key_people: { handle: string; reason: string }[] | null;
+  synthesis_updated_at: string | null;
+  last_tweet_count: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -21,6 +25,7 @@ export interface Collection {
   description: string | null;
   ai_summary: string | null;
   ai_conclusions: string[] | null;
+  ai_key_people: { handle: string; reason: string }[] | null;
   summary_updated_at: string | null;
   tweet_count: number;
   theme_id: string | null;
@@ -64,4 +69,14 @@ export interface CapturedTweet {
   image_urls?: string[];
   article_url?: string | null;
   thread_content?: ThreadTweet[];
+}
+
+export interface ThemeDigest {
+  id: string;
+  theme_id: string;
+  user_id: string;
+  tweet_count: number;
+  kta: string[];
+  new_voices: { handle: string; reason: string }[];
+  created_at: string;
 }
