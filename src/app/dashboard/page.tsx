@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import CollectionCard from '@/components/CollectionCard';
 import NewCollectionButton from '@/components/NewCollectionButton';
+import AssignThemesButton from '@/components/AssignThemesButton';
 import type { Collection, Theme } from '@/types/database';
 
 export default async function DashboardPage() {
@@ -73,9 +74,12 @@ export default async function DashboardPage() {
 
       {uncategorized.length > 0 && (
         <section className="mb-10">
-          <h3 className="mb-4 font-mono text-xs tracking-widest text-shadow uppercase border-b border-seam pb-2">
-            Uncategorized
-          </h3>
+          <div className="mb-4 flex items-center justify-between border-b border-seam pb-2">
+            <h3 className="font-mono text-xs tracking-widest text-shadow uppercase">
+              Uncategorized
+            </h3>
+            <AssignThemesButton count={uncategorized.length} />
+          </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {uncategorized.map((col) => (
               <CollectionCard key={col.id} collection={col} />
