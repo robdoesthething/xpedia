@@ -10,7 +10,7 @@
     "type-check": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build:extension": "node scripts/generate-extension-config.js && tsc -p src/chrome-extension/tsconfig.json && npx esbuild src/chrome-extension/content.ts --bundle --outfile=dist/chrome-extension/content.js --platform=browser --target=chrome120 && cp src/chrome-extension/manifest.json src/chrome-extension/popup.html dist/chrome-extension/"
+    "build:extension": "node scripts/generate-extension-config.js && npx esbuild src/chrome-extension/content.ts --bundle --outfile=dist/chrome-extension/content.js --platform=browser --target=chrome120 && npx esbuild src/chrome-extension/background.ts --bundle --outfile=dist/chrome-extension/background.js --platform=browser --target=chrome120 --format=iife && npx esbuild src/chrome-extension/popup.ts --bundle --outfile=dist/chrome-extension/popup.js --platform=browser --target=chrome120 --format=iife && cp src/chrome-extension/manifest.json src/chrome-extension/popup.html dist/chrome-extension/"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",

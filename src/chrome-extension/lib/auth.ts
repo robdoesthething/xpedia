@@ -32,7 +32,12 @@ export async function signIn(
     return { error: body.error_description || body.msg || 'Sign in failed' };
   }
 
-  const data: SignInResponse = await res.json();
+  let data: SignInResponse;
+  try {
+    data = await res.json();
+  } catch {
+    return { error: 'Invalid response from auth server' };
+  }
   const tokens: AuthTokens = {
     access_token: data.access_token,
     refresh_token: data.refresh_token,
@@ -74,7 +79,13 @@ async function refreshToken(refresh: string): Promise<AuthTokens | null> {
     return null;
   }
 
-  const data: SignInResponse = await res.json();
+  let data: SignInResponse;
+  try {
+    data = await res.json();
+  } catch {
+    await signOut();
+    return null;
+  }
   const tokens: AuthTokens = {
     access_token: data.access_token,
     refresh_token: data.refresh_token,
