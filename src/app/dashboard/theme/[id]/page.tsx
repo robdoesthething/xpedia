@@ -13,16 +13,20 @@ export default async function ThemeDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) notFound();
 
   const [themeRes, collectionsRes, digestsRes] = await Promise.all([
-    supabase.from('themes').select('*').eq('id', id).single<Theme>(),
+    supabase.from('themes').select('*').eq('id', id).eq('user_id', user.id).single<Theme>(),
     supabase.from('collections')
       .select('*, themes(id, name, created_at, updated_at)')
       .eq('theme_id', id)
+      .eq('user_id', user.id)
       .order('name')
       .returns<(Collection & { themes: Theme | null })[]>(),
     supabase.from('theme_digests').select('*')
       .eq('theme_id', id)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(10)
       .returns<ThemeDigest[]>(),
