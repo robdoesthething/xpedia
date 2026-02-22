@@ -126,8 +126,14 @@ export const aiRouter = {
       thread_content?: { content: string }[] | null;
     },
     existingCollectionNames: string[],
-    userId?: string
+    userId?: string,
+    existingThemeNames: string[] = []
   ): Promise<CategorizationResult | null> {
+    const themesContext =
+      existingThemeNames.length > 0
+        ? `Existing themes: ${existingThemeNames.join(', ')}`
+        : 'No existing themes yet.';
+
     const collectionsContext =
       existingCollectionNames.length > 0
         ? `Existing collections: ${existingCollectionNames.join(', ')}`
@@ -147,6 +153,7 @@ Rules:
   GOOD: "Use tiered pricing anchored to a decoy option to increase average deal size by 20-30%"
   BAD: "A tweet about pricing strategies"
 
+${themesContext}
 ${collectionsContext}
 
 Respond with ONLY valid JSON: {"theme_name": "...", "collection_name": "...", "summary": "..."}`;

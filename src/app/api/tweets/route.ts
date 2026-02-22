@@ -197,6 +197,7 @@ async function categorizeTweetsInBackground(tweetIds: string[], userId: string) 
       .from('themes')
       .select('id, name')
       .eq('user_id', userId);
+    const themeNames = (themes ?? []).map((t: { name: string }) => t.name);
     for (const t of themes ?? []) {
       themeMap.set(t.name.toLowerCase(), t.id);
     }
@@ -211,7 +212,7 @@ async function categorizeTweetsInBackground(tweetIds: string[], userId: string) 
         article_url?: string | null; article_title?: string | null; article_description?: string | null;
         thread_content?: { content: string }[] | null;
       }) => {
-        const result = await aiRouter.categorize(tweet, collectionNames, userId);
+        const result = await aiRouter.categorize(tweet, collectionNames, userId, themeNames);
         if (!result) return;
 
         // Resolve or create theme

@@ -68,6 +68,9 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
+    if (error.code === '23505') {
+      return Response.json({ error: 'A theme with that name already exists' }, { status: 409 });
+    }
     console.error('[DB] Failed to create theme:', error.message);
     return Response.json({ error: 'Failed to create theme' }, { status: 500 });
   }
