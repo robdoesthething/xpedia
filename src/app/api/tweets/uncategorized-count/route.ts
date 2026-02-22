@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
     .is('collection_id', null);
 
   if (error) {
+    console.error('[DB] Failed to count uncategorized tweets:', error.message);
     return Response.json({ error: 'Failed to count' }, { status: 500, headers: cors });
   }
 
