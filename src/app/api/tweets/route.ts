@@ -233,11 +233,14 @@ async function categorizeTweetsInBackground(tweetIds: string[], userId: string) 
 
         // Assign theme to the collection if not already set
         if (themeId) {
-          await supabase
+          const { error: themeErr } = await supabase
             .from('collections')
             .update({ theme_id: themeId })
             .eq('id', collectionId)
             .is('theme_id', null); // only set if not already assigned
+          if (themeErr) {
+            console.error(`[AI] Failed to assign theme to collection ${collectionId}:`, themeErr.message);
+          }
         }
 
         // Update tweet with collection assignment and AI summary
