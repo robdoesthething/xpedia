@@ -22,7 +22,15 @@ export async function GET(
       .order('created_at', { ascending: false }).limit(10),
   ]);
 
+  if (themeRes.error) {
+    if (themeRes.error.code === 'PGRST116') return Response.json({ error: 'Not found' }, { status: 404 });
+    console.error('[DB] Failed to fetch theme:', themeRes.error.message);
+    return Response.json({ error: 'Failed to fetch theme' }, { status: 500 });
+  }
   if (!themeRes.data) return Response.json({ error: 'Not found' }, { status: 404 });
+
+  if (collectionsRes.error) console.error('[DB] Failed to fetch theme collections:', collectionsRes.error.message);
+  if (digestsRes.error) console.error('[DB] Failed to fetch theme digests:', digestsRes.error.message);
 
   return Response.json({
     theme: themeRes.data,
@@ -58,11 +66,13 @@ export async function PATCH(
     .from('themes').update({ name }).eq('id', id).eq('user_id', user.id)
     .select('id, name').single();
 
-  if (error || !data) {
-    if (error?.code === '23505') return Response.json({ error: 'A theme with that name already exists' }, { status: 409 });
-    console.error('[DB] Failed to rename theme:', error?.message);
-    return Response.json({ error: 'Theme not found' }, { status: 404 });
+  if (error) {
+    if (error.code === '23505') return Response.json({ error: 'A theme with that name already exists' }, { status: 409 });
+    if (error.code === 'PGRST116') return Response.json({ error: 'Theme not found' }, { status: 404 });
+    console.error('[DB] Failed to rename theme:', error.message);
+    return Response.json({ error: 'Failed to rename theme' }, { status: 500 });
   }
+  if (!data) return Response.json({ error: 'Theme not found' }, { status: 404 });
 
   return Response.json(data);
 }
