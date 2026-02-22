@@ -50,3 +50,12 @@ export async function sendTweets(
 
   return res.json();
 }
+
+export async function fetchUncategorizedCount(token: string): Promise<number> {
+  const res = await fetch(
+    `${API_BASE}/api/tweets/uncategorized-count?access_token=${encodeURIComponent(token)}`
+  );
+  if (!res.ok) return 0;
+  const data: { count: number } = await res.json();
+  return data.count;
+}

@@ -1,5 +1,5 @@
 import { getToken } from './lib/auth.js';
-import { fetchSavedUrls, sendTweets } from './lib/api.js';
+import { fetchSavedUrls, sendTweets, fetchUncategorizedCount } from './lib/api.js';
 import type { CapturedTweet } from './lib/api.js';
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -22,13 +22,15 @@ async function handleTweetsExtracted(tweets: CapturedTweet[]): Promise<{ saved: 
   const newTweets = tweets.filter((t) => !savedSet.has(t.tweet_url));
 
   if (newTweets.length === 0) {
-    updateBadge(0);
+    const count = await fetchUncategorizedCount(token);
+    updateBadge(count);
     return { saved: 0 };
   }
 
   try {
     const result = await sendTweets(token, newTweets);
-    updateBadge(result.saved);
+    const count = await fetchUncategorizedCount(token);
+    updateBadge(count);
     console.log(`[Xpedia] Captured ${result.saved} tweets (${result.duplicates} duplicates)`);
     return { saved: result.saved };
   } catch (err) {
