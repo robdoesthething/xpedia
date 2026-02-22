@@ -56,7 +56,7 @@ export async function regenerateCollectionDocument(
   if (rawTweets.length === 0) {
     const { error } = await client
       .from('collections')
-      .update({ ai_summary: null, ai_conclusions: null, summary_updated_at: new Date().toISOString() })
+      .update({ ai_conclusions: null, ai_key_people: null, summary_updated_at: new Date().toISOString() })
       .eq('id', collectionId);
 
     if (error) {
@@ -108,14 +108,14 @@ export async function regenerateCollectionDocument(
     return { author_handle: t.author_handle, content: enrichedContent };
   });
 
-  const [summary, conclusions] = await Promise.all([
-    aiRouter.generateSummary(collectionName, tweets, userId),
+  const [conclusions, keyPeople] = await Promise.all([
     aiRouter.generateConclusions(collectionName, tweets, userId),
+    aiRouter.generateKeyPeople(tweets, userId),
   ]);
 
   const updates: Record<string, unknown> = { summary_updated_at: new Date().toISOString() };
-  if (summary) updates.ai_summary = summary;
   if (conclusions) updates.ai_conclusions = conclusions;
+  if (keyPeople) updates.ai_key_people = keyPeople;
 
   const { error } = await client
     .from('collections')

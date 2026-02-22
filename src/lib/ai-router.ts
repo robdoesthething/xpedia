@@ -344,4 +344,53 @@ Return ONLY a JSON array of strings: ["conclusion 1", "conclusion 2", ...]`,
       return null;
     }
   },
+  /**
+   * Identify the most valuable contributors to follow based on their tweets in this collection.
+   */
+  async generateKeyPeople(
+    tweets: { author_handle: string; content: string }[],
+    userId?: string
+  ): Promise<{ handle: string; reason: string }[] | null> {
+    const handles = [...new Set(tweets.map((t) => `@${t.author_handle}`))].join(', ');
+    const tweetBlock = tweets
+      .map((t, i) => `${i + 1}. @${t.author_handle}: ${t.content}`)
+      .join('\n');
+
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: `You identify the most valuable people to follow based on the tweets they contributed to this collection.
+
+Contributors: ${handles}
+
+Rules:
+- Select up to 5 contributors whose tweets showed the most concrete, actionable value.
+- For each, write a one-line reason (max 15 words) explaining why they're worth following — based on what THEY specifically shared, not generic praise.
+- Only include handles that actually appear in the tweet list.
+
+Return ONLY a JSON array: [{"handle": "username_without_@", "reason": "..."}, ...]`,
+      },
+      { role: 'user', content: tweetBlock },
+    ];
+
+    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 400);
+    if (!result) return null;
+
+    logAiCall({ userId, provider: result.provider, operation: 'key_people', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
+
+    try {
+      const parsed = JSON.parse(cleanJson(result.content));
+      if (!Array.isArray(parsed)) return null;
+      return parsed
+        .filter((p: unknown) => p && typeof p === 'object' && 'handle' in p && 'reason' in p)
+        .map((p: { handle: unknown; reason: unknown }) => ({
+          handle: String(p.handle).replace(/^@/, ''),
+          reason: String(p.reason),
+        }));
+    } catch {
+      console.error('[AI] Failed to parse key_people JSON:', result.content);
+      return null;
+    }
+  },
+
 };

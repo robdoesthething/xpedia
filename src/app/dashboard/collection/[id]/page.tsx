@@ -75,19 +75,33 @@ export default async function CollectionDetailPage({
         <ExportButtons markdown={markdown} filename={filename} />
       </div>
 
-      {collection.ai_summary && (
-        <div className="mb-6 border border-seam bg-ink p-5">
-          <h2 className="mb-3 font-mono text-xs tracking-widest text-gold uppercase">Summary</h2>
-          <p className="text-sm leading-relaxed text-mist">{collection.ai_summary}</p>
-        </div>
-      )}
-
       {collection.ai_conclusions && collection.ai_conclusions.length > 0 && (
         <div className="mb-6 border border-seam bg-ink p-5">
-          <h2 className="mb-3 font-mono text-xs tracking-widest text-gold uppercase">Actionable Conclusions</h2>
+          <h2 className="mb-3 font-mono text-xs tracking-widest text-gold uppercase">Actionable Insights</h2>
           <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-mist">
             {collection.ai_conclusions.map((conclusion, i) => (
               <li key={i}>{conclusion}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {collection.ai_key_people && collection.ai_key_people.length > 0 && (
+        <div className="mb-6 border border-seam bg-ink p-5">
+          <h2 className="mb-3 font-mono text-xs tracking-widest text-gold uppercase">Key People to Follow</h2>
+          <ul className="space-y-2">
+            {collection.ai_key_people.map((person) => (
+              <li key={person.handle} className="flex items-start gap-2 text-sm text-mist">
+                <a
+                  href={`https://x.com/${person.handle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 font-mono text-gold hover:text-gold-bright transition-colors"
+                >
+                  @{person.handle}
+                </a>
+                <span>— {person.reason}</span>
+              </li>
             ))}
           </ul>
         </div>
