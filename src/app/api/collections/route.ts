@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { name: string; type: string };
+  let body: { name: string; type: string; theme_id?: string | null };
   try {
     body = await request.json();
   } catch {
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from('collections')
-    .insert({ user_id: user.id, name, type: body.type })
+    .insert({ user_id: user.id, name, type: body.type, theme_id: body.theme_id ?? null })
     .select('id, name, type')
     .single();
 

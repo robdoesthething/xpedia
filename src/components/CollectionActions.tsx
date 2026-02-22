@@ -1,32 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function CollectionActions({
   collectionId,
   initialName,
   initialType,
+  initialThemeId,
 }: {
   collectionId: string;
   initialName: string;
   initialType: 'topic' | 'project';
+  initialThemeId: string | null;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(initialName);
   const [type, setType] = useState<'topic' | 'project'>(initialType);
+  const [themeId, setThemeId] = useState<string | null>(initialThemeId);
+  const [themes, setThemes] = useState<{ id: string; name: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+
+  useEffect(() => {
+    if (!editing) return;
+    fetch('/api/themes')
+      .then((r) => r.json())
+      .then((data) => setThemes(data.themes ?? []))
+      .catch(() => {});
+  }, [editing]);
 
   async function handleSave() {
     setSaving(true);
     const res = await fetch(`/api/collections/${collectionId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), type }),
+      body: JSON.stringify({ name: name.trim(), type, theme_id: themeId }),
     });
     setSaving(false);
     if (res.ok) {
@@ -70,6 +82,16 @@ export default function CollectionActions({
           <option value="topic">Topic</option>
           <option value="project">Project</option>
         </select>
+        <select
+          value={themeId ?? ''}
+          onChange={(e) => setThemeId(e.target.value || null)}
+          className="bg-void border border-seam px-2 py-1.5 text-sm text-parchment focus:border-gold focus:outline-none transition-colors"
+        >
+          <option value="">No theme</option>
+          {themes.map((t) => (
+            <option key={t.id} value={t.id}>{t.name}</option>
+          ))}
+        </select>
         <button
           onClick={handleSave}
           disabled={saving || !name.trim()}
@@ -78,7 +100,7 @@ export default function CollectionActions({
           {saving ? 'Saving...' : 'Save'}
         </button>
         <button
-          onClick={() => { setName(initialName); setType(initialType); setEditing(false); }}
+          onClick={() => { setName(initialName); setType(initialType); setThemeId(initialThemeId); setEditing(false); }}
           className="font-mono text-xs tracking-widest text-shadow uppercase hover:text-mist transition-colors px-2 py-1.5"
         >
           Cancel

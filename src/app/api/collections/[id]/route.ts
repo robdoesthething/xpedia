@@ -19,14 +19,14 @@ export async function PATCH(
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { name?: string; type?: string };
+  let body: { name?: string; type?: string; theme_id?: string | null };
   try {
     body = await request.json();
   } catch {
     return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const updates: Record<string, string> = {};
+  const updates: Record<string, unknown> = {};
 
   if (body.name !== undefined) {
     const name = body.name.trim();
@@ -41,6 +41,10 @@ export async function PATCH(
       return Response.json({ error: 'Type must be "topic" or "project"' }, { status: 400 });
     }
     updates.type = body.type;
+  }
+
+  if ('theme_id' in body) {
+    updates.theme_id = body.theme_id ?? null;
   }
 
   if (Object.keys(updates).length === 0) {

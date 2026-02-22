@@ -11,12 +11,18 @@ export default function NewCollectionModal({
 }) {
   const [name, setName] = useState('');
   const [type, setType] = useState<'topic' | 'project'>('project');
+  const [themeId, setThemeId] = useState<string | null>(null);
+  const [themes, setThemes] = useState<{ id: string; name: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
+    fetch('/api/themes')
+      .then((r) => r.json())
+      .then((data) => setThemes(data.themes ?? []))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -35,7 +41,7 @@ export default function NewCollectionModal({
     const res = await fetch('/api/collections', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), type }),
+      body: JSON.stringify({ name: name.trim(), type, theme_id: themeId }),
     });
 
     const data = await res.json();
@@ -100,6 +106,25 @@ export default function NewCollectionModal({
               ))}
             </div>
           </fieldset>
+
+          {themes.length > 0 && (
+            <div>
+              <label htmlFor="collection-theme" className="block font-mono text-xs tracking-widest text-mist uppercase mb-2">
+                Theme <span className="text-shadow normal-case tracking-normal">(optional)</span>
+              </label>
+              <select
+                id="collection-theme"
+                value={themeId ?? ''}
+                onChange={(e) => setThemeId(e.target.value || null)}
+                className="w-full bg-void border border-seam px-4 py-3 text-sm text-parchment focus:border-gold focus:outline-none transition-colors"
+              >
+                <option value="">No theme</option>
+                {themes.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {error && <p className="font-mono text-xs text-red-400">{error}</p>}
 

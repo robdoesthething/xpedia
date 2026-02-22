@@ -6,7 +6,7 @@ import ExportButtons from '@/components/ExportButtons';
 import CollectionActions from '@/components/CollectionActions';
 import TweetCard from '@/components/TweetCard';
 import MoveTweetButton from '@/components/MoveTweetButton';
-import type { Collection, Tweet } from '@/types/database';
+import type { Collection, Tweet, Theme } from '@/types/database';
 
 export default async function CollectionDetailPage({
   params,
@@ -17,7 +17,7 @@ export default async function CollectionDetailPage({
   const supabase = await createClient();
 
   const [collectionResult, tweetsResult, collectionsResult] = await Promise.all([
-    supabase.from('collections').select('*').eq('id', id).single<Collection>(),
+    supabase.from('collections').select('*, themes(id, name, created_at, updated_at)').eq('id', id).single<Collection & { themes: Theme | null }>(),
     supabase
       .from('tweets')
       .select('*')
@@ -53,14 +53,22 @@ export default async function CollectionDetailPage({
       <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 className="font-serif text-4xl text-parchment">{collection.name}</h1>
-          <span className="mt-2 inline-block font-mono text-xs tracking-widest text-shadow uppercase">
-            {collection.type}
-          </span>
+          <div className="mt-2 flex items-center gap-3">
+            <span className="font-mono text-xs tracking-widest text-shadow uppercase">
+              {collection.type}
+            </span>
+            {collection.themes && (
+              <span className="font-mono text-xs tracking-widest text-gold uppercase">
+                {collection.themes.name}
+              </span>
+            )}
+          </div>
           <div className="mt-4">
             <CollectionActions
               collectionId={collection.id}
               initialName={collection.name}
               initialType={collection.type}
+              initialThemeId={collection.theme_id}
             />
           </div>
         </div>
