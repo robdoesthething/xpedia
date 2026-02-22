@@ -21,7 +21,8 @@ export default function SourcesFilter({ collections, uncategorizedCount, totalCo
     } else {
       params.set('filter', value);
     }
-    router.push(`${pathname}?${params.toString()}`);
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
   }
 
   const tabs = [
