@@ -48,6 +48,7 @@ export interface Tweet {
   article_title: string | null;
   article_description: string | null;
   ai_summary: string | null;
+  extracted_content: string | null;
   tweet_date: string | null;
   captured_at: string;
 }

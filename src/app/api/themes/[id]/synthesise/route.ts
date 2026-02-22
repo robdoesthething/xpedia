@@ -89,7 +89,7 @@ export async function POST(
     ai_key_people: keyPeople ?? [],
     synthesis_updated_at: now,
     last_tweet_count: allTweets.length,
-  }).eq('id', id);
+  }).eq('id', id).eq('user_id', user.id);
 
   if (themeErr) {
     console.error('[AI] Failed to save theme synthesis:', themeErr.message);

@@ -1,5 +1,6 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { aiRouter } from '@/lib/ai-router';
+import type { Tweet } from '@/types/database';
 
 /** Create a service-role Supabase client for background operations (bypasses RLS). */
 function createServiceClient() {
@@ -11,17 +12,7 @@ function createServiceClient() {
 
 type SupabaseServiceClient = ReturnType<typeof createServiceClient>;
 
-type RawTweet = {
-  id: string;
-  author_handle: string;
-  content: string;
-  content_type?: string;
-  image_urls?: string[];
-  article_title?: string | null;
-  article_description?: string | null;
-  thread_content?: { content: string }[] | null;
-  extracted_content?: string | null;
-};
+type RawTweet = Pick<Tweet, 'id' | 'author_handle' | 'content' | 'content_type' | 'image_urls' | 'article_title' | 'article_description' | 'thread_content' | 'extracted_content'>;
 
 /**
  * Regenerate AI summary and conclusions for a collection using a two-pass approach:
