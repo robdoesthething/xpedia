@@ -31,20 +31,28 @@ export async function POST(
   if (!theme) return Response.json({ error: 'Theme not found' }, { status: 404 });
 
   // Fetch all collections in this theme
-  const { data: collections } = await service
+  const { data: collections, error: collectionsErr } = await service
     .from('collections').select('id').eq('theme_id', id).eq('user_id', user.id);
 
+  if (collectionsErr) {
+    console.error('[DB] Failed to fetch collections for theme:', collectionsErr.message);
+    return Response.json({ error: 'Failed to fetch collections' }, { status: 500 });
+  }
   if (!collections?.length) return Response.json({ error: 'No collections in this theme' }, { status: 400 });
 
   const collectionIds = collections.map((c: { id: string }) => c.id);
 
   // Fetch all tweets in the theme
-  const { data: allTweets } = await service
+  const { data: allTweets, error: tweetsErr } = await service
     .from('tweets')
     .select('id, author_handle, content, extracted_content, captured_at')
     .in('collection_id', collectionIds)
     .order('captured_at', { ascending: true });
 
+  if (tweetsErr) {
+    console.error('[DB] Failed to fetch tweets for theme synthesis:', tweetsErr.message);
+    return Response.json({ error: 'Failed to fetch tweets' }, { status: 500 });
+  }
   if (!allTweets?.length) return Response.json({ error: 'No tweets in this theme' }, { status: 400 });
 
   // Build tweet input (prefer extracted_content)
@@ -88,14 +96,14 @@ export async function POST(
     return Response.json({ error: 'Failed to save synthesis' }, { status: 500 });
   }
 
-  // Insert digest entry if there are new tweets
-  if (digestResult && newTweetInputs.length > 0) {
+  // Insert digest entry if there are new tweets (even if AI failed, record the count)
+  if (newTweetInputs.length > 0) {
     const { error: digestErr } = await service.from('theme_digests').insert({
       theme_id: id,
       user_id: user.id,
       tweet_count: newTweetInputs.length,
-      kta: digestResult.kta,
-      new_voices: digestResult.new_voices,
+      kta: digestResult?.kta ?? [],
+      new_voices: digestResult?.new_voices ?? [],
     });
     if (digestErr) console.error('[AI] Failed to insert digest:', digestErr.message);
   }

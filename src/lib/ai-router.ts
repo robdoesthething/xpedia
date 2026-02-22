@@ -460,7 +460,14 @@ Return ONLY valid JSON: {"kta": [...], "new_voices": [...]}`,
       if (!parsed.kta || !parsed.new_voices) return null;
       return {
         kta: Array.isArray(parsed.kta) ? parsed.kta.map(String) : [],
-        new_voices: Array.isArray(parsed.new_voices) ? parsed.new_voices : [],
+        new_voices: Array.isArray(parsed.new_voices)
+          ? parsed.new_voices
+              .filter((p: unknown) => p && typeof p === 'object' && 'handle' in p && 'reason' in p)
+              .map((p: { handle: unknown; reason: unknown }) => ({
+                handle: String(p.handle).replace(/^@/, ''),
+                reason: String(p.reason),
+              }))
+          : [],
       };
     } catch {
       console.error('[AI] Failed to parse digest JSON:', result.content);
