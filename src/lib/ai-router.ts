@@ -19,6 +19,7 @@ interface ChatMessage {
 }
 
 interface CategorizationResult {
+  theme_name: string;
   collection_name: string;
   summary: string;
   provider: string;
@@ -132,22 +133,23 @@ export const aiRouter = {
         ? `Existing collections: ${existingCollectionNames.join(', ')}`
         : 'No existing collections yet.';
 
-    const systemPrompt = `You categorize tweets into specific, actionable collections and write sharp one-line summaries.
+    const systemPrompt = `You categorize tweets into specific, actionable collections under broad themes, and write sharp one-line summaries.
 
 Rules:
-- Prefer assigning to an existing collection if the tweet fits.
-- Only create a new collection if no existing one fits.
-- Collection names must be SPECIFIC and ACTIONABLE — not vague categories.
-  GOOD: "Pricing Strategy Tactics", "React Performance Patterns", "Cold Email Templates", "Fundraising Pitch Tips", "SQL Query Optimization"
+- Assign a broad 2-4 word THEME (e.g. "Programming", "Business Strategy", "AI & Machine Learning", "Design Thinking", "Personal Development").
+  Prefer reusing an existing theme name when a good match exists.
+- Assign a SPECIFIC, ACTIONABLE collection within that theme — not vague categories.
+  GOOD: "Pricing Strategy Tactics", "React Performance Patterns", "Cold Email Templates", "Fundraising Pitch Tips"
   BAD: "Tech", "Business", "Programming", "Interesting Thoughts", "General Advice"
-- Names should be 2-5 words, title-cased, and describe a skill or knowledge area someone would actively study.
+- Collection names should be 2-5 words, title-cased, describing a skill or knowledge area someone would actively study.
+- Prefer assigning to an existing collection if the tweet fits.
 - The summary must capture the SPECIFIC actionable insight, not just restate the topic.
   GOOD: "Use tiered pricing anchored to a decoy option to increase average deal size by 20-30%"
   BAD: "A tweet about pricing strategies"
 
 ${collectionsContext}
 
-Respond with ONLY valid JSON: {"collection_name": "...", "summary": "..."}`;
+Respond with ONLY valid JSON: {"theme_name": "...", "collection_name": "...", "summary": "..."}`;
 
     let textContent = `@${tweet.author_handle}: `;
 
@@ -183,11 +185,12 @@ Respond with ONLY valid JSON: {"collection_name": "...", "summary": "..."}`;
 
     try {
       const parsed = JSON.parse(cleanJson(result.content));
-      if (!parsed.collection_name || !parsed.summary) {
+      if (!parsed.theme_name || !parsed.collection_name || !parsed.summary) {
         console.error('[AI] Invalid categorization response:', result.content);
         return null;
       }
       return {
+        theme_name: String(parsed.theme_name).trim(),
         collection_name: String(parsed.collection_name).trim(),
         summary: String(parsed.summary).trim(),
         provider: result.provider,

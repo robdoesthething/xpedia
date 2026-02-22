@@ -191,6 +191,16 @@ async function categorizeTweetsInBackground(tweetIds: string[], userId: string) 
       (collections ?? []).map((c: { id: string; name: string }) => [c.name.toLowerCase(), c.id])
     );
 
+    const themeMap = new Map<string, string>();
+    // Pre-populate from existing themes
+    const { data: themes } = await supabase
+      .from('themes')
+      .select('id, name')
+      .eq('user_id', userId);
+    for (const t of themes ?? []) {
+      themeMap.set(t.name.toLowerCase(), t.id);
+    }
+
     // Categorize all tweets in parallel
     const affectedCollectionIds = new Set<string>();
 
@@ -204,6 +214,14 @@ async function categorizeTweetsInBackground(tweetIds: string[], userId: string) 
         const result = await aiRouter.categorize(tweet, collectionNames, userId);
         if (!result) return;
 
+        // Resolve or create theme
+        const themeId = await resolveTheme(
+          supabase,
+          userId,
+          result.theme_name,
+          themeMap
+        );
+
         // Resolve or create collection
         const collectionId = await resolveCollection(
           supabase,
@@ -212,6 +230,15 @@ async function categorizeTweetsInBackground(tweetIds: string[], userId: string) 
           collectionMap
         );
         if (!collectionId) return;
+
+        // Assign theme to the collection if not already set
+        if (themeId) {
+          await supabase
+            .from('collections')
+            .update({ theme_id: themeId })
+            .eq('id', collectionId)
+            .is('theme_id', null); // only set if not already assigned
+        }
 
         // Update tweet with collection assignment and AI summary
         const { error: updateErr } = await supabase
@@ -311,3 +338,41 @@ async function resolveCollection(
   return data.id;
 }
 
+
+async function resolveTheme(
+  supabase: ReturnType<typeof createServiceClient>,
+  userId: string,
+  themeName: string,
+  themeMap: Map<string, string>
+): Promise<string | null> {
+  const existing = themeMap.get(themeName.toLowerCase());
+  if (existing) return existing;
+
+  const { data, error } = await supabase
+    .from('themes')
+    .insert({ user_id: userId, name: themeName })
+    .select('id')
+    .single();
+
+  if (error) {
+    // Race condition: re-fetch
+    const { data: fallback } = await supabase
+      .from('themes')
+      .select('id')
+      .eq('user_id', userId)
+      .ilike('name', themeName)
+      .single();
+
+    if (fallback) {
+      themeMap.set(themeName.toLowerCase(), fallback.id);
+      return fallback.id;
+    }
+
+    console.error(`[AI] Failed to create theme "${themeName}":`, error.message);
+    return null;
+  }
+
+  themeMap.set(themeName.toLowerCase(), data.id);
+  console.log(`[AI] Created theme "${themeName}" (${data.id})`);
+  return data.id;
+}
