@@ -4,10 +4,13 @@
   "version": "0.1.0",
   "description": "Capture your X bookmarks into a structured knowledge corpus.",
   "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://x.com/*"],
+  "host_permissions": [
+    "https://x.com/*",
+    "https://xpedia-five.vercel.app/*",
+    "https://izmziwdtpqzcwchlfbik.supabase.co/*"
+  ],
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
