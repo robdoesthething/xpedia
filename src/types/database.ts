@@ -5,6 +5,14 @@ export interface User {
   created_at: string;
 }
 
+export interface Theme {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Collection {
   id: string;
   user_id: string;
@@ -15,6 +23,7 @@ export interface Collection {
   ai_conclusions: string[] | null;
   summary_updated_at: string | null;
   tweet_count: number;
+  theme_id: string | null;
   created_at: string;
   updated_at: string;
 }
