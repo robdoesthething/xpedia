@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { aiRouter } from '@/lib/ai-router';
+import { validateOrigin, csrfForbidden } from '@/lib/csrf';
+import { checkRateLimit } from '@/lib/rate-limit';
 import type { NextRequest } from 'next/server';
 
 export const maxDuration = 60;
@@ -20,6 +22,16 @@ export async function POST(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!validateOrigin(_request)) return csrfForbidden();
+
+  // 3 synthesis requests per minute per user
+  const rl = checkRateLimit(`synthesise:${user.id}`, 3, 60_000);
+  if (!rl.allowed) {
+    return Response.json(
+      { error: 'Too many requests. Please wait before synthesising again.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
+    );
+  }
 
   const service = createServiceClient();
 
@@ -65,11 +77,11 @@ export async function POST(
   const lastSynthAt = theme.synthesis_updated_at;
   const newTweetInputs = lastSynthAt
     ? allTweets
-        .filter((t: { captured_at: string }) => t.captured_at > lastSynthAt)
-        .map((t: { author_handle: string; content: string; extracted_content?: string | null }) => ({
-          author_handle: t.author_handle,
-          content: t.extracted_content ?? t.content,
-        }))
+      .filter((t: { captured_at: string }) => t.captured_at > lastSynthAt)
+      .map((t: { author_handle: string; content: string; extracted_content?: string | null }) => ({
+        author_handle: t.author_handle,
+        content: t.extracted_content ?? t.content,
+      }))
     : tweetInputs;
 
   // Run synthesis and digest in parallel

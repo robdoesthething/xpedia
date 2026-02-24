@@ -15,6 +15,8 @@ export interface CapturedTweet {
   content_type?: 'tweet' | 'thread' | 'article';
   image_urls?: string[];
   article_url?: string | null;
+  article_title?: string | null;
+  article_description?: string | null;
   thread_content?: ThreadTweet[];
 }
 

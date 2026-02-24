@@ -16,7 +16,7 @@ export interface AIProvider {
 const GEMINI: AIProvider = {
   name: 'Google AI Studio',
   baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai',
-  model: 'gemini-2.5-flash-preview-05-20',
+  model: 'gemini-2.5-flash',
   apiKeyEnvVar: 'GOOGLE_AI_API_KEY',
   quota: { requestsPerMinute: 10, requestsPerDay: 500, tokensPerMinute: 250_000 },
 };
@@ -32,7 +32,7 @@ const GROQ: AIProvider = {
 const CEREBRAS: AIProvider = {
   name: 'Cerebras',
   baseURL: 'https://api.cerebras.ai/v1',
-  model: 'llama-3.3-70b',
+  model: 'qwen-3-235b-a22b-instruct-2507',
   apiKeyEnvVar: 'CEREBRAS_API_KEY',
   quota: { requestsPerMinute: 30, requestsPerDay: 1_000, tokensPerMinute: 60_000 },
 };
@@ -45,19 +45,28 @@ const SAMBANOVA: AIProvider = {
   quota: { requestsPerMinute: 10, requestsPerDay: 1_000, tokensPerMinute: 40_000 },
 };
 
+const DEEPSEEK: AIProvider = {
+  name: 'DeepSeek',
+  baseURL: 'https://api.deepseek.com/v1',
+  model: 'deepseek-chat',
+  apiKeyEnvVar: 'DEEPSEEK_API_KEY',
+  quota: { requestsPerMinute: 10, requestsPerDay: 500, tokensPerMinute: 40_000 },
+};
+
 /** All known providers — used to display quota info even for unused ones. */
-export const ALL_PROVIDERS: AIProvider[] = [GEMINI, GROQ, CEREBRAS, SAMBANOVA];
+export const ALL_PROVIDERS: AIProvider[] = [GEMINI, GROQ, CEREBRAS, SAMBANOVA, DEEPSEEK];
 
 /** Categorization: quality-first (Gemini primary, fast fallbacks). */
-export const CATEGORIZATION_PROVIDERS: AIProvider[] = [GEMINI, GROQ, CEREBRAS, SAMBANOVA];
+export const CATEGORIZATION_PROVIDERS: AIProvider[] = [GEMINI, GROQ, CEREBRAS, SAMBANOVA, DEEPSEEK];
 
 /** Summary generation: long-context preferred. */
-export const SUMMARY_PROVIDERS: AIProvider[] = [GEMINI, GROQ, CEREBRAS];
+export const SUMMARY_PROVIDERS: AIProvider[] = [GEMINI, GROQ, CEREBRAS, DEEPSEEK];
 
 /** Conclusions generation: quality preferred. */
-export const CONCLUSIONS_PROVIDERS: AIProvider[] = [GEMINI, SAMBANOVA, GROQ];
+export const CONCLUSIONS_PROVIDERS: AIProvider[] = [GEMINI, SAMBANOVA, GROQ, DEEPSEEK];
 
 /** Filter to providers whose API key env var is set. */
 export function getAvailableProviders(providers: AIProvider[]): AIProvider[] {
   return providers.filter((p) => !!process.env[p.apiKeyEnvVar]);
 }
+

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClientFromToken } from '@/lib/supabase/api';
 import { getCorsHeaders, corsOptions } from '@/lib/cors';
+import { checkRateLimit } from '@/lib/rate-limit';
 import type { CapturedTweet } from '@/types/database';
 
 const MAX_TWEETS_PER_REQUEST = 100;
@@ -34,8 +35,17 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    console.error('[Capture] Auth failed:', authError?.message);
+    console.error('[Capture] Auth failed');
     return Response.json({ error: 'Unauthorized' }, { status: 401, headers: cors });
+  }
+
+  // 10 capture requests per minute per user
+  const rl = checkRateLimit(`tweets:${user.id}`, 10, 60_000);
+  if (!rl.allowed) {
+    return Response.json(
+      { error: 'Too many requests. Please wait before sending more tweets.' },
+      { status: 429, headers: { ...cors, 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
+    );
   }
 
   let body: { tweets: CapturedTweet[] };
@@ -69,6 +79,8 @@ export async function POST(request: NextRequest) {
     content_type: t.content_type ?? 'tweet',
     image_urls: t.image_urls ?? [],
     article_url: t.article_url ?? null,
+    article_title: t.article_title ?? null,
+    article_description: t.article_description ?? null,
     thread_content: t.thread_content ?? null,
   }));
 
@@ -88,7 +100,7 @@ export async function POST(request: NextRequest) {
   const saved = data?.length ?? 0;
   const duplicates = body.tweets.length - saved;
 
-  console.log(`[Capture] User ${user.id}: saved=${saved}, duplicates=${duplicates}`);
+  console.log(`[Capture] saved=${saved}, duplicates=${duplicates}`);
 
   return Response.json({ saved, duplicates }, { headers: cors });
 }

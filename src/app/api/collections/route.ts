@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
+import { validateOrigin, csrfForbidden } from '@/lib/csrf';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/collections — Create a new collection manually.
@@ -14,6 +16,17 @@ export async function POST(request: Request) {
 
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!validateOrigin(request)) return csrfForbidden();
+
+  // 10 collection creates per minute per user
+  const rl = checkRateLimit(`collections:${user.id}`, 10, 60_000);
+  if (!rl.allowed) {
+    return Response.json(
+      { error: 'Too many requests. Please wait.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
+    );
   }
 
   let body: { name: string; type: string; theme_id?: string | null };

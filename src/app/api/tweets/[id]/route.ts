@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
+import { validateOrigin, csrfForbidden } from '@/lib/csrf';
 
 /**
  * PATCH /api/tweets/[id] — Move a tweet to a different collection.
@@ -22,6 +23,8 @@ export async function PATCH(
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  if (!validateOrigin(request)) return csrfForbidden();
 
   let body: { collection_id: string | null };
   try {
@@ -115,6 +118,8 @@ export async function DELETE(
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  if (!validateOrigin(_request)) return csrfForbidden();
 
   const { data: tweet, error: fetchErr } = await supabase
     .from('tweets')

@@ -12,7 +12,7 @@ function createServiceClient() {
 
 type SupabaseServiceClient = ReturnType<typeof createServiceClient>;
 
-type RawTweet = Pick<Tweet, 'id' | 'author_handle' | 'content' | 'content_type' | 'image_urls' | 'article_title' | 'article_description' | 'thread_content' | 'extracted_content'>;
+type RawTweet = Pick<Tweet, 'id' | 'author_handle' | 'content' | 'content_type' | 'image_urls' | 'article_title' | 'article_description' | 'article_body' | 'thread_content' | 'extracted_content'>;
 
 /**
  * Regenerate AI summary and conclusions for a collection using a two-pass approach:
@@ -30,7 +30,7 @@ export async function regenerateCollectionDocument(
     client.from('collections').select('name').eq('id', collectionId).single(),
     client
       .from('tweets')
-      .select('id, author_handle, content, content_type, image_urls, article_title, article_description, thread_content, extracted_content')
+      .select('id, author_handle, content, content_type, image_urls, article_title, article_description, article_body, thread_content, extracted_content')
       .eq('collection_id', collectionId)
       .eq('user_id', userId)
       .order('captured_at', { ascending: true }),
@@ -94,6 +94,7 @@ export async function regenerateCollectionDocument(
     if (t.content_type === 'article') {
       if (t.article_title) enrichedContent = `[Article: ${t.article_title}]\n` + enrichedContent;
       if (t.article_description) enrichedContent += `\n${t.article_description}`;
+      if (t.article_body) enrichedContent += `\n\n--- Article body ---\n${t.article_body.slice(0, 1500)}`;
     }
 
     return { author_handle: t.author_handle, content: enrichedContent };

@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { aiRouter } from '@/lib/ai-router';
+import { validateOrigin, csrfForbidden } from '@/lib/csrf';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 function createServiceClient() {
   return createSupabaseClient(
@@ -14,7 +16,7 @@ function createServiceClient() {
  * Assigns AI-generated themes to all collections that have no theme_id.
  * Auth: Cookie-based.
  */
-export async function POST() {
+export async function POST(request: Request) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,6 +24,17 @@ export async function POST() {
 
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!validateOrigin(request)) return csrfForbidden();
+
+  // 3 assign-theme calls per minute per user
+  const rl = checkRateLimit(`assign-themes:${user.id}`, 3, 60_000);
+  if (!rl.allowed) {
+    return Response.json(
+      { error: 'Too many requests. Please wait.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
+    );
   }
 
   const service = createServiceClient();

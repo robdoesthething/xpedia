@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { aiRouter } from '@/lib/ai-router';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { validateOrigin, csrfForbidden } from '@/lib/csrf';
+import { scrapeArticleBody } from '@/lib/article-scraper';
 
 export const maxDuration = 60;
 
@@ -11,7 +13,7 @@ export const maxDuration = 60;
  * Auth: Cookie-based.
  * Runs synchronously so the caller gets a real result (not fire-and-forget).
  */
-export async function POST() {
+export async function POST(request: Request) {
   const supabase = await createClient();
 
   const {
@@ -21,6 +23,8 @@ export async function POST() {
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  if (!validateOrigin(request)) return csrfForbidden();
 
   // 3 categorize calls per minute per user
   const rl = checkRateLimit(`categorize:${user.id}`, 3, 60_000);
@@ -34,7 +38,7 @@ export async function POST() {
   // Fetch uncategorized tweets with rich fields
   const { data: tweets, error: tweetsErr } = await supabase
     .from('tweets')
-    .select('id, content, author_handle, content_type, image_urls, article_url, article_title, article_description, thread_content')
+    .select('id, content, author_handle, content_type, image_urls, article_url, article_title, article_description, article_body, thread_content')
     .is('collection_id', null)
     .order('captured_at', { ascending: false })
     .limit(50);
@@ -54,6 +58,7 @@ export async function POST() {
       id: string; content: string; author_handle: string;
       content_type?: string; image_urls?: string[];
       article_url?: string | null; article_title?: string | null; article_description?: string | null;
+      article_body?: string | null;
       thread_content?: { content: string }[] | null;
     }[],
     user.id
@@ -74,6 +79,7 @@ async function categorizeTweets(
     id: string; content: string; author_handle: string;
     content_type?: string; image_urls?: string[];
     article_url?: string | null; article_title?: string | null; article_description?: string | null;
+    article_body?: string | null;
     thread_content?: { content: string }[] | null;
   }[],
   userId: string
@@ -100,6 +106,19 @@ async function categorizeTweets(
     // Process tweets sequentially to avoid rate limits on free AI tiers
     for (const tweet of tweets) {
       try {
+        // Scrape article body if this is an article tweet without cached body
+        if (tweet.content_type === 'article' && tweet.article_url && !tweet.article_body) {
+          const body = await scrapeArticleBody(tweet.article_url);
+          if (body) {
+            tweet.article_body = body;
+            await supabase
+              .from('tweets')
+              .update({ article_body: body })
+              .eq('id', tweet.id);
+            console.log(`[AI] Scraped article body for tweet ${tweet.id} (${body.length} chars)`);
+          }
+        }
+
         const result = await aiRouter.categorize(tweet, collectionNames, userId);
         if (!result) {
           errors++;

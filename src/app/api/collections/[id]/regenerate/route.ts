@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { validateOrigin, csrfForbidden } from '@/lib/csrf';
 
 export const maxDuration = 60;
 
@@ -23,6 +24,8 @@ export async function POST(
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  if (!validateOrigin(_request)) return csrfForbidden();
 
   // 5 regenerations per minute per user
   const rl = checkRateLimit(`regenerate:${user.id}`, 5, 60_000);

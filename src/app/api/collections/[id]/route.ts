@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { validateOrigin, csrfForbidden } from '@/lib/csrf';
 
 /**
  * PATCH /api/collections/[id] — Update a collection's name or type.
@@ -18,6 +19,8 @@ export async function PATCH(
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  if (!validateOrigin(request)) return csrfForbidden();
 
   let body: { name?: string; type?: string; theme_id?: string | null };
   try {
@@ -85,6 +88,8 @@ export async function DELETE(
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  if (!validateOrigin(_request)) return csrfForbidden();
 
   const { error } = await supabase
     .from('collections')

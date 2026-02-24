@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { validateOrigin, csrfForbidden } from '@/lib/csrf';
 
 /**
  * GET /api/themes/[id] — Theme detail with collections and digests.
@@ -51,6 +52,7 @@ export async function PATCH(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!validateOrigin(request)) return csrfForbidden();
 
   let body: { name?: string };
   try { body = await request.json(); } catch {
@@ -89,6 +91,7 @@ export async function DELETE(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!validateOrigin(_request)) return csrfForbidden();
 
   const { error } = await supabase
     .from('themes').delete().eq('id', id).eq('user_id', user.id);

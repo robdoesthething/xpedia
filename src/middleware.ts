@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
-
-const APP_ORIGIN = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+import { isAllowedOrigin } from '@/lib/cors';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -11,16 +10,12 @@ export async function middleware(request: NextRequest) {
   // can interfere — which causes "Redirect is not allowed for a preflight".
   if (request.method === 'OPTIONS' && pathname.startsWith('/api/')) {
     const origin = request.headers.get('Origin') ?? '';
-    const allowed =
-      origin.startsWith('chrome-extension://') || origin === APP_ORIGIN
-        ? origin
-        : null;
 
-    if (allowed) {
+    if (isAllowedOrigin(origin)) {
       return new NextResponse(null, {
         status: 204,
         headers: {
-          'Access-Control-Allow-Origin': allowed,
+          'Access-Control-Allow-Origin': origin,
           'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
           'Access-Control-Allow-Headers': 'Authorization, Content-Type',
         },

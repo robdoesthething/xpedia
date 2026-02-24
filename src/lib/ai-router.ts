@@ -6,6 +6,7 @@ import {
   getAvailableProviders,
 } from './ai-providers';
 import { logAiCall } from './ai-logger';
+import { sanitizeForPrompt } from './sanitize';
 
 interface MessageContent {
   type: 'text' | 'image_url';
@@ -123,6 +124,7 @@ export const aiRouter = {
       image_urls?: string[];
       article_title?: string | null;
       article_description?: string | null;
+      article_body?: string | null;
       thread_content?: { content: string }[] | null;
     },
     existingCollectionNames: string[],
@@ -139,45 +141,44 @@ export const aiRouter = {
         ? `Existing collections: ${existingCollectionNames.join(', ')}`
         : 'No existing collections yet.';
 
-    const systemPrompt = `You categorize tweets into specific, actionable collections under broad themes, and write sharp one-line summaries.
+    const systemPrompt = `You categorize tweets into collections under themes, and write a one-line actionable summary.
 
-Rules:
-- Assign a broad 2-4 word THEME (e.g. "Programming", "Business Strategy", "AI & Machine Learning", "Design Thinking", "Personal Development").
-  Prefer reusing an existing theme name when a good match exists.
-- Assign a SPECIFIC, ACTIONABLE collection within that theme — not vague categories.
-  GOOD: "Pricing Strategy Tactics", "React Performance Patterns", "Cold Email Templates", "Fundraising Pitch Tips"
-  BAD: "Tech", "Business", "Programming", "Interesting Thoughts", "General Advice"
-- Collection names should be 2-5 words, title-cased, describing a skill or knowledge area someone would actively study.
-- Prefer assigning to an existing collection if the tweet fits.
-- The summary must capture the SPECIFIC actionable insight, not just restate the topic.
-  GOOD: "Use tiered pricing anchored to a decoy option to increase average deal size by 20-30%"
-  BAD: "A tweet about pricing strategies"
+THEME: 2-4 words, broad. Reuse from existing list if possible.
+COLLECTION: 2-5 words, title-cased, a studyable skill area. Reuse existing if it fits. Never vague ("Tech", "Business").
+
+SUMMARY — the most important field:
+- Start with an ACTION VERB (Add, Use, Implement, Switch, Set, Reduce, Run, Test, Apply, Build, Adopt, Create).
+- Capture the CORE technique and its MEASURABLE RESULT.
+- Copy ALL quantitative data verbatim: percentages (40%, 5x), dollar amounts ($38K), durations (2 hours, 7 days), counts (12 slides, 200 components), scores (8.2/10), and pixel/unit values (400px, 12KB).
+- If the tweet has no specific technique or numbers, summarize the key mindset shift in one concrete sentence.
 
 ${themesContext}
 ${collectionsContext}
 
 Respond with ONLY valid JSON: {"theme_name": "...", "collection_name": "...", "summary": "..."}`;
 
-    let textContent = `@${tweet.author_handle}: `;
+    const handle = sanitizeForPrompt(tweet.author_handle, 100);
+    let textContent = `@${handle}: `;
 
     if (tweet.content_type === 'thread' && tweet.thread_content?.length) {
-      textContent += tweet.thread_content.map((t) => t.content).join('\n---\n');
+      textContent += tweet.thread_content.map((t) => sanitizeForPrompt(t.content)).join('\n---\n');
     } else {
-      textContent += tweet.content;
+      textContent += sanitizeForPrompt(tweet.content);
     }
 
     if (tweet.content_type === 'article') {
-      if (tweet.article_title) textContent = `[Article: ${tweet.article_title}]\n` + textContent;
-      if (tweet.article_description) textContent += `\n${tweet.article_description}`;
+      if (tweet.article_title) textContent = `[Article: ${sanitizeForPrompt(tweet.article_title, 200)}]\n` + textContent;
+      if (tweet.article_description) textContent += `\n${sanitizeForPrompt(tweet.article_description, 500)}`;
+      if (tweet.article_body) textContent += `\n\n--- Article body ---\n${sanitizeForPrompt(tweet.article_body, 1500)}`;
     }
 
     const images = tweet.image_urls?.slice(0, 3) ?? [];
     const userContent: string | MessageContent[] =
       images.length > 0
         ? [
-            { type: 'text', text: textContent },
-            ...images.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
-          ]
+          { type: 'text', text: textContent },
+          ...images.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
+        ]
         : textContent;
 
     const messages: ChatMessage[] = [
@@ -217,13 +218,21 @@ Respond with ONLY valid JSON: {"theme_name": "...", "collection_name": "...", "s
       content: string;
       author_handle: string;
       content_type?: string;
+      article_title?: string | null;
+      article_description?: string | null;
+      article_body?: string | null;
       thread_content?: { content: string }[] | null;
     },
     userId?: string
   ): Promise<string | null> {
-    let rawText = tweet.content;
+    let rawText = sanitizeForPrompt(tweet.content);
     if (tweet.content_type === 'thread' && tweet.thread_content?.length) {
-      rawText = tweet.thread_content.map((t) => t.content).join('\n---\n');
+      rawText = tweet.thread_content.map((t) => sanitizeForPrompt(t.content)).join('\n---\n');
+    }
+    if (tweet.content_type === 'article') {
+      if (tweet.article_title) rawText = `[Article: ${sanitizeForPrompt(tweet.article_title, 200)}]\n` + rawText;
+      if (tweet.article_description) rawText += `\n${sanitizeForPrompt(tweet.article_description, 500)}`;
+      if (tweet.article_body) rawText += `\n\n--- Article body ---\n${sanitizeForPrompt(tweet.article_body, 1500)}`;
     }
 
     const messages: ChatMessage[] = [
@@ -242,7 +251,7 @@ Rules:
       },
       {
         role: 'user',
-        content: `@${tweet.author_handle}: ${rawText}`,
+        content: `@${sanitizeForPrompt(tweet.author_handle, 100)}: ${rawText}`,
       },
     ];
 
@@ -264,7 +273,7 @@ Rules:
     userId?: string
   ): Promise<string | null> {
     const tweetBlock = tweets
-      .map((t, i) => `${i + 1}. @${t.author_handle}: ${t.content}`)
+      .map((t, i) => `${i + 1}. @${sanitizeForPrompt(t.author_handle, 100)}: ${sanitizeForPrompt(t.content)}`)
       .join('\n');
 
     const messages: ChatMessage[] = [
@@ -275,6 +284,7 @@ Rules:
 Write a reference summary for the "${collectionName}" collection. Rules:
 - Read every tweet carefully. If a tweet contains a reusable prompt, script, template, formula, or step-by-step process — quote it VERBATIM inside a blockquote (>). Do not paraphrase things that are more valuable in their original words.
 - Surface specific techniques, exact numbers, named frameworks, and concrete examples — not vague descriptions of them.
+- NEVER attribute to @handles or write "as shared by" / "as suggested by". Write the content as a reference document, not a list of who said what.
 - Note points of consensus and any notable contrarian takes.
 - Do NOT write in vague generalities. A reader should be able to act on this immediately.
 - Length: as long as needed to capture everything valuable — do not truncate to seem concise.`,
@@ -302,24 +312,25 @@ Write a reference summary for the "${collectionName}" collection. Rules:
     userId?: string
   ): Promise<string[] | null> {
     const tweetBlock = tweets
-      .map((t, i) => `${i + 1}. @${t.author_handle}: ${t.content}`)
+      .map((t, i) => `${i + 1}. @${sanitizeForPrompt(t.author_handle, 100)}: ${sanitizeForPrompt(t.content)}`)
       .join('\n');
 
     const messages: ChatMessage[] = [
       {
         role: 'system',
-        content: `You extract specific, actionable conclusions from curated tweet collections.
+        content: `Distill these tweets into 5-7 actions someone can take THIS WEEK to improve their ${collectionName}.
 
-Given tweets in the "${collectionName}" collection, produce 3-7 conclusions. Rules:
-- Each must be a specific action someone can take THIS WEEK — not vague advice.
-- If a tweet contains a ready-to-use prompt, script, or template, include it verbatim inside the conclusion string (use quotes or a colon to introduce it). Do not summarize it away.
-- Include concrete details: exact tools, numbers, steps, or named frameworks.
-  GOOD: "Use the STAR framework when writing cold outreach: 'Situation → Task → Action → Result' — converts 3x better than feature-listing"
-  BAD: "Write better cold emails"
-  GOOD: "Run this ChatGPT prompt to audit your pricing page: [exact prompt from tweet]"
-  BAD: "Use AI to improve your pricing"
+RULES:
+- Each action starts with an imperative verb (Raise, Add, Remove, Set, Test, Switch, Audit, Kill).
+- Every action includes at least one specific number, formula, or framework from the tweets.
+- Include complete frameworks — never say "use the framework" without listing its steps.
+- NEVER reference @handles, sources, or authors. Output the substance, not attribution.
+- Order from highest-impact to lowest-impact.
 
-Return ONLY a JSON array of strings: ["conclusion 1", "conclusion 2", ...]`,
+FORMAT: Each action should follow this pattern:
+"[Verb] [specific action] — [expected measurable result]. [Any supporting detail or framework steps]."
+
+Return ONLY a JSON array of strings: ["action 1", "action 2", ...]`,
       },
       {
         role: 'user',
@@ -351,9 +362,9 @@ Return ONLY a JSON array of strings: ["conclusion 1", "conclusion 2", ...]`,
     tweets: { author_handle: string; content: string }[],
     userId?: string
   ): Promise<{ handle: string; reason: string }[] | null> {
-    const handles = [...new Set(tweets.map((t) => `@${t.author_handle}`))].join(', ');
+    const handles = [...new Set(tweets.map((t) => `@${sanitizeForPrompt(t.author_handle, 100)}`))].join(', ');
     const tweetBlock = tweets
-      .map((t, i) => `${i + 1}. @${t.author_handle}: ${t.content}`)
+      .map((t, i) => `${i + 1}. @${sanitizeForPrompt(t.author_handle, 100)}: ${sanitizeForPrompt(t.content)}`)
       .join('\n');
 
     const messages: ChatMessage[] = [
@@ -397,20 +408,29 @@ Return ONLY a JSON array: [{"handle": "username_without_@", "reason": "..."}, ..
     tweets: { author_handle: string; content: string }[],
     userId?: string
   ): Promise<string[] | null> {
-    const tweetBlock = tweets.map((t, i) => `${i + 1}. @${t.author_handle}: ${t.content}`).join('\n');
+    const tweetBlock = tweets.map((t, i) => `${i + 1}. @${sanitizeForPrompt(t.author_handle, 100)}: ${sanitizeForPrompt(t.content)}`).join('\n');
 
     const messages: ChatMessage[] = [
       {
         role: 'system',
-        content: `You synthesise a theme-level knowledge brief from curated tweets across multiple collections.
+        content: `Synthesise a knowledge brief from curated tweets. Produce 5-8 insights in THREE tiers:
 
-Produce 5-10 actionable insights. Rules:
-- Each insight must be something a reader can act on THIS WEEK.
-- Include specific tools, frameworks, numbers, or scripts where the tweets contain them.
-- Cross-reference ideas that appear in multiple tweets — consensus is more valuable.
-- Flag any notable contrarian or surprising findings.
+TIER 1 — CONSENSUS (things multiple sources agree on):
+These are the strongest signals. Start each with "✅ ".
 
-Return ONLY a JSON array of strings: ["insight 1", "insight 2", ...]`,
+TIER 2 — STANDOUT TACTICS (unique techniques with proven results):
+Specific techniques from individual sources with measured outcomes. Start each with "⚡ ".
+
+TIER 3 — CONTRARIAN (ideas that challenge conventional wisdom):
+Flag these explicitly. Start each with "⚠️ ".
+
+RULES:
+- Every insight includes specific numbers, frameworks, or quoted techniques.
+- NEVER reference @handles or sources. Output the substance only.
+- Order by impact within each tier.
+- Include frameworks in full — never say "there's a framework" without listing its steps.
+
+Return ONLY a JSON array of strings: ["✅ insight...", "⚡ insight...", "⚠️ insight...", ...]`,
       },
       { role: 'user', content: tweetBlock },
     ];
@@ -434,7 +454,7 @@ Return ONLY a JSON array of strings: ["insight 1", "insight 2", ...]`,
     tweets: { author_handle: string; content: string }[],
     userId?: string
   ): Promise<{ kta: string[]; new_voices: { handle: string; reason: string }[] } | null> {
-    const tweetBlock = tweets.map((t, i) => `${i + 1}. @${t.author_handle}: ${t.content}`).join('\n');
+    const tweetBlock = tweets.map((t, i) => `${i + 1}. @${sanitizeForPrompt(t.author_handle, 100)}: ${sanitizeForPrompt(t.content)}`).join('\n');
 
     const messages: ChatMessage[] = [
       {
@@ -462,11 +482,11 @@ Return ONLY valid JSON: {"kta": [...], "new_voices": [...]}`,
         kta: Array.isArray(parsed.kta) ? parsed.kta.map(String) : [],
         new_voices: Array.isArray(parsed.new_voices)
           ? parsed.new_voices
-              .filter((p: unknown) => p && typeof p === 'object' && 'handle' in p && 'reason' in p)
-              .map((p: { handle: unknown; reason: unknown }) => ({
-                handle: String(p.handle).replace(/^@/, ''),
-                reason: String(p.reason),
-              }))
+            .filter((p: unknown) => p && typeof p === 'object' && 'handle' in p && 'reason' in p)
+            .map((p: { handle: unknown; reason: unknown }) => ({
+              handle: String(p.handle).replace(/^@/, ''),
+              reason: String(p.reason),
+            }))
           : [],
       };
     } catch {
