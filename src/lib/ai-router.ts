@@ -389,23 +389,25 @@ ABSOLUTE RULES:
     const messages: ChatMessage[] = [
       {
         role: 'system',
-        content: `Distill these tweets into 5-7 actions someone can take THIS WEEK to improve their ${collectionName}.
+        content: `You extract actionable takeaways from curated tweets about "${collectionName}". Output is stored as reference material — every takeaway must contain enough substance to act on without reading the original tweets.
 
-RULES:
-- Each action starts with an imperative verb (Raise, Add, Remove, Set, Test, Switch, Audit, Kill).
-- Every action includes at least one specific number, formula, or framework from the tweets.
-- Include complete frameworks — never say "use the framework" without listing its steps.
-- NEVER reference @handles, sources, or authors. No "as shared by" or "according to". Output the substance, not attribution.
-- NEVER include percentages, dollar amounts, multipliers, or outcome predictions. No "25% improvement", "$5,000 value", "expected result". Describe ONLY what to do and how.
-- If two tweets suggest the same action, merge them into one conclusion. Never list the same advice twice.
-- SKIP any tweet that is spam, a scam link, or pure self-promotion with no actionable content.
-- Order from highest-impact to lowest-impact.
-- If fewer than 2 genuine actions can be extracted, return: ["Insufficient actionable content in this collection."]
+Produce 5-7 takeaways. Each is a standalone paragraph that captures WHAT was specifically said or recommended, not a generic restatement.
 
-FORMAT: Each action should follow this pattern:
-"[Verb] [specific action]. [Supporting detail, framework steps, or tool names]."
+SUBSTANCE RULES:
+- Extract the ACTUAL technique, comparison, configuration, or recommendation from each tweet. If a tweet says "use MiniMax 2.5 for image generation because it handles lighting better than DALL-E 3", write THAT — do not invent a "MiniMax 2.5 framework" with made-up steps.
+- If a tweet mentions a tool or model by name, describe what SPECIFICALLY it does well or how to use it according to the tweet. Do not invent steps or frameworks that were not in the tweet.
+- If a tweet contains a genuine multi-step process, list ALL the steps verbatim. If it just mentions a tool name with no steps, describe the tool's specific strength — do NOT invent a step-by-step framework around it.
+- Merge tweets that say the same thing. Never repeat the same advice.
 
-Return ONLY a JSON array of strings: ["action 1", "action 2", ...]`,
+ANTI-HALLUCINATION RULES:
+- NEVER invent framework steps that were not explicitly stated in the tweets.
+- NEVER attach percentages, dollar amounts, or outcome predictions.
+- NEVER reference @handles, sources, or authors.
+- SKIP spam, scam links, and pure self-promotion.
+
+FORMAT: Start each takeaway with an imperative verb. Write 2-3 sentences of substance per takeaway.
+
+Return ONLY a JSON array of strings.`,
       },
       {
         role: 'user',
@@ -413,7 +415,7 @@ Return ONLY a JSON array of strings: ["action 1", "action 2", ...]`,
       },
     ];
 
-    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 800);
+    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 1200);
     if (!result) return null;
 
     logAiCall({ userId, provider: result.provider, operation: 'conclude', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
