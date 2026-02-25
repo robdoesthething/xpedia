@@ -447,7 +447,7 @@ Return ONLY a JSON array: [{"handle": "username_without_@", "reason": "..."}, ..
         content: `You distill curated tweets into a dense knowledge brief. Your output is stored as .md reference material that LLMs consume to execute tasks — so every insight must contain enough detail to act on WITHOUT the original tweets.
 
 FORMAT: Produce 5-8 insights. Each insight is a standalone paragraph following this structure:
-"[TIER EMOJI] [Technique/principle name in bold]: [1-2 sentence description of what it is and why it matters]. [Concrete how-to: the specific steps, tool names, prompt text, framework stages, or configuration needed to apply it]. [What this replaces or improves upon, if mentioned in the tweets]."
+"[TIER EMOJI] **[Technique name]**: [What it is and when to use it]. [Step-by-step how-to with enough detail to execute]. [What this replaces or improves upon]."
 
 TIER EMOJIS:
 ✅ = Multiple sources converge on this (strongest signal)
@@ -455,21 +455,21 @@ TIER EMOJIS:
 ⚠️ = Challenges conventional wisdom
 
 CRITICAL RULES:
-- DO NOT invent numbers. No "25% increase", "3x improvement", "40% reduction" unless a tweet contains that EXACT figure. If a tweet says "doubled my output" → write "doubled" not "100% increase".
-- DO NOT predict outcomes. No "expected result of...", "this leads to...", "you'll see...". Describe the technique only.
-- DO NOT mention @handles, sources, or attribution. Write standalone knowledge.
-- DO NOT hedge. No "appears to", "seems to", "could be". State facts or omit.
-- When a tweet contains a verbatim prompt, template, or checklist → quote it inside the insight using markdown (\` for inline, block for multi-line).
-- When a tweet names a framework with steps → list ALL the steps, not "use the X framework".
-- When a tweet names specific tools → include tool names and describe what role they play.
-- SKIP spam, scam links, and pure self-promotion entirely.
+- STRIP ALL UNVERIFIED CLAIMS. Tweets routinely contain invented or aspirational metrics ("80% improvement", "$5,000 value", "3x faster", "90% reduction"). These are marketing language, not data. Drop every percentage, dollar figure, and multiplier unless it comes from a cited study or benchmark with a named source. Describe the technique WITHOUT any numeric outcome claims.
+- DO NOT predict outcomes or results. No "this leads to", "expected result", "you'll see". Describe ONLY the technique and its mechanics.
+- DO NOT mention @handles, sources, or attribution.
+- DO NOT hedge. No "appears to", "seems to", "could be".
+- When a tweet contains a verbatim prompt or template → quote it using markdown.
+- When a tweet names a framework with steps → list ALL steps.
+- When a tweet names specific tools → include tool names and their role.
+- SKIP spam, scam links, and pure self-promotion.
 - If no genuine consensus exists, omit ✅ tier rather than fabricating agreement.
 
-BAD EXAMPLE (do NOT produce this):
-"Set a 2-hour timer to research prompts — 90% reduction in research time."
+BAD (contains unverified stats from tweets):
+"Set a 2-hour timer to research prompts — 90% reduction in research time. Use the 7-point framework."
 
-GOOD EXAMPLE (produce this):
-"⚡ **Time-boxed prompt crafting**: Allocate a fixed 2-hour block specifically for prompt research and iteration. Structure the session using a 7-step framework: (1) define the topic, (2) identify key questions, (3) gather relevant data, (4) analyze patterns, (5) draw conclusions, (6) identify gaps in coverage, (7) refine the prompt based on gaps found. This prevents open-ended research spirals and forces concrete output within a session."
+GOOD (same technique, stats stripped, detail added):
+"⚡ **Time-boxed prompt crafting**: Allocate a fixed 2-hour block for prompt research and iteration. Structure the session in 7 steps: (1) define the topic, (2) identify key questions, (3) gather relevant data, (4) analyze patterns, (5) draw conclusions, (6) identify gaps in coverage, (7) refine the prompt based on gaps found. This replaces open-ended research sessions that lack concrete deliverables."
 
 Return ONLY a JSON array of strings.`,
       },
