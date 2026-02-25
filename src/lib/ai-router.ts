@@ -507,6 +507,58 @@ Return ONLY a JSON array of strings.`,
     return parsed.map(String).map(stripMetricClaims);
   },
 
+  /**
+   * Assign MECE topic labels to tweets within a collection.
+   * Returns the ordered list of topics and a mapping of tweet ID to topic name.
+   */
+  async assignTopics(
+    tweets: { id: string; content: string }[],
+    userId?: string
+  ): Promise<{ topics: string[]; assignments: Record<string, string> } | null> {
+    if (tweets.length === 0) return null;
+
+    const numberedTweets = tweets
+      .map((t, i) => `${i + 1}. [ID:${t.id}] ${sanitizeForPrompt(t.content)}`)
+      .join('\n');
+
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: `You categorize tweets into MECE (Mutually Exclusive, Collectively Exhaustive) knowledge areas.
+
+INSTRUCTIONS:
+1. Read all tweets and identify 3-5 knowledge areas that cover ALL tweets.
+2. Areas must be MUTUALLY EXCLUSIVE — if a tweet could fit two areas, MERGE those areas into one.
+3. Areas must be COLLECTIVELY EXHAUSTIVE — every tweet maps to exactly one area.
+4. Name areas by SUBJECT (e.g., "Machine Learning", "Content Strategy"), not by method ("Tools", "Techniques").
+5. Assign each tweet to exactly one area using its [ID:...] tag.
+
+Return ONLY valid JSON:
+{
+  "topics": ["Area 1", "Area 2", "Area 3"],
+  "assignments": { "tweet-id-1": "Area 1", "tweet-id-2": "Area 2" }
+}`,
+      },
+      { role: 'user', content: numberedTweets },
+    ];
+
+    const result = await callWithRotation(CATEGORIZATION_PROVIDERS, messages, 1000, 0.3);
+    if (!result) return null;
+
+    logAiCall({ userId, provider: result.provider, operation: 'assign_topics', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
+
+    const parsed2 = parseAiJson<{ topics: unknown[]; assignments: Record<string, unknown> }>(result.content, 'assign_topics');
+    if (!parsed2?.topics || !parsed2?.assignments) return null;
+
+    const topics = Array.isArray(parsed2.topics) ? parsed2.topics.map(String) : [];
+    const assignments: Record<string, string> = {};
+    for (const [tweetId, topic] of Object.entries(parsed2.assignments)) {
+      assignments[tweetId] = String(topic);
+    }
+
+    return { topics, assignments };
+  },
+
   async generateDigest(
     tweets: { author_handle: string; content: string }[],
     userId?: string

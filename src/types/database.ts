@@ -26,6 +26,7 @@ export interface Collection {
   ai_summary: string | null;
   ai_conclusions: string[] | null;
   ai_key_people: { handle: string; reason: string }[] | null;
+  ai_topics: string[] | null;
   summary_updated_at: string | null;
   tweet_count: number;
   theme_id: string | null;
@@ -49,6 +50,7 @@ export interface Tweet {
   article_description: string | null;
   article_body: string | null;
   ai_summary: string | null;
+  ai_topic: string | null;
   extracted_content: string | null;
   tweet_date: string | null;
   captured_at: string;

@@ -37,7 +37,7 @@ export async function regenerateCollectionDocument(
   if (rawTweets.length === 0) {
     const { error } = await client
       .from('collections')
-      .update({ ai_conclusions: null, ai_key_people: null, summary_updated_at: new Date().toISOString() })
+      .update({ ai_conclusions: null, ai_key_people: null, ai_topics: null, summary_updated_at: new Date().toISOString() })
       .eq('id', collectionId);
 
     if (error) {
@@ -96,10 +96,28 @@ export async function regenerateCollectionDocument(
     aiRouter.generateKeyPeople(tweets, userId),
   ]);
 
+  // Pass 3: Assign MECE topic labels to each tweet
+  const topicInput = rawTweets.map((t) => ({
+    id: t.id,
+    content: t.extracted_content ?? t.content,
+  }));
+  const topicResult = await aiRouter.assignTopics(topicInput, userId).catch((err) => {
+    console.error('[AI] assignTopics threw:', err);
+    return null;
+  });
+
+  if (topicResult) {
+    const topicUpdates = Object.entries(topicResult.assignments).map(([tweetId, topic]) =>
+      client.from('tweets').update({ ai_topic: topic }).eq('id', tweetId)
+    );
+    await Promise.allSettled(topicUpdates);
+  }
+
   const updates: Record<string, unknown> = { summary_updated_at: new Date().toISOString() };
   if (summary) updates.ai_summary = summary;
   if (conclusions) updates.ai_conclusions = conclusions;
   if (keyPeople) updates.ai_key_people = keyPeople;
+  if (topicResult?.topics) updates.ai_topics = topicResult.topics;
 
   const { error } = await client
     .from('collections')
@@ -111,5 +129,5 @@ export async function regenerateCollectionDocument(
     return;
   }
 
-  console.log(`[AI] Regenerated document for "${collectionName}" (${rawTweets.length} tweets, ${needsExtraction.length} extracted)`);
+  console.log(`[AI] Regenerated document for "${collectionName}" (${rawTweets.length} tweets, ${needsExtraction.length} extracted, topics=${topicResult?.topics?.length ?? 'failed'})`);
 }

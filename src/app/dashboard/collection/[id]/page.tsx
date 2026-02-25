@@ -124,7 +124,67 @@ export default async function CollectionDetailPage({
             {' '}and use &ldquo;Move to&hellip;&rdquo; to add items here.
           </p>
         </div>
+      ) : collection.ai_topics && collection.ai_topics.length > 0 ? (
+        /* Grouped by MECE topic */
+        <div className="flex flex-col gap-8">
+          {collection.ai_topics.map((topic) => {
+            const topicTweets = tweets.filter((t) => t.ai_topic === topic);
+            if (topicTweets.length === 0) return null;
+            return (
+              <section key={topic}>
+                <h3 className="mb-3 flex items-center gap-2 font-mono text-xs tracking-widest text-gold uppercase">
+                  <span>{topic}</span>
+                  <span className="text-shadow">({topicTweets.length})</span>
+                </h3>
+                <div className="flex flex-col gap-4 border-l border-seam/30 pl-4">
+                  {topicTweets.map((tweet) => (
+                    <TweetCard
+                      key={tweet.id}
+                      tweet={tweet}
+                      actions={
+                        <MoveTweetButton
+                          tweetId={tweet.id}
+                          currentCollectionId={id}
+                          collections={allCollections}
+                        />
+                      }
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+          {/* Tweets without a topic assignment */}
+          {(() => {
+            const ungrouped = tweets.filter((t) => !t.ai_topic || !collection.ai_topics?.includes(t.ai_topic));
+            if (ungrouped.length === 0) return null;
+            return (
+              <section>
+                <h3 className="mb-3 flex items-center gap-2 font-mono text-xs tracking-widest text-gold uppercase">
+                  <span>Other</span>
+                  <span className="text-shadow">({ungrouped.length})</span>
+                </h3>
+                <div className="flex flex-col gap-4 border-l border-seam/30 pl-4">
+                  {ungrouped.map((tweet) => (
+                    <TweetCard
+                      key={tweet.id}
+                      tweet={tweet}
+                      actions={
+                        <MoveTweetButton
+                          tweetId={tweet.id}
+                          currentCollectionId={id}
+                          collections={allCollections}
+                        />
+                      }
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })()}
+        </div>
       ) : (
+        /* Flat list fallback — no topics assigned yet */
         <div className="flex flex-col gap-4">
           {tweets.map((tweet) => (
             <TweetCard
