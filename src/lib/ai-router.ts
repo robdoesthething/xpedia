@@ -58,16 +58,19 @@ function formatTweetBlock(tweets: { author_handle: string; content: string }[]):
  */
 function stripMetricClaims(text: string): string {
   return text
-    // "— 80% improvement in clarity" or "- 25% increase in X"
-    .replace(/\s*[—–-]+\s*\$?\d[\d,.]*%?\s*(increase|decrease|improvement|reduction|drop|boost|gain|faster|slower|better|worse|more|less|hit rate)[^.]*\./gi, '.')
-    // "expected X of Y%" or "expected result of..." 
-    .replace(/\s*[—–-]+\s*expected\s+[^.]*\./gi, '.')
-    // standalone "$5,000 value" / "$5,000 potential"
+    // Any em-dash/dash followed by text containing a percentage: "— 25% improvement in X."
+    .replace(/\s*[—–-]+\s*[^.]*\d+%[^.]*\./gi, '.')
+    // Any em-dash/dash followed by a dollar amount: "— $5,000 potential value."
     .replace(/\s*[—–-]+\s*\$[\d,]+[^.]*\./gi, '.')
-    // "100% hit rate" anywhere in text
-    .replace(/\d+%\s+hit\s+rate/gi, 'consistent results')
+    // Any em-dash/dash followed by "expected": "— expected result of..."
+    .replace(/\s*[—–-]+\s*expected\s+[^.]*\./gi, '.')
+    // Any em-dash/dash followed by Nx multiplier: "— 3x faster."
+    .replace(/\s*[—–-]+\s*\d+x\s+[^.]*\./gi, '.')
+    // Standalone mid-sentence percentage claims without dashes: "achieving 90% success rate"
+    .replace(/\b\d+%\s+(success rate|hit rate|improvement|increase|decrease|reduction|accuracy|effectiveness|failure rate)[^,.]*/gi, '')
     // Clean up orphaned double spaces and punctuation
     .replace(/\.\s*\./g, '.')
+    .replace(/,\s*\./g, '.')
     .replace(/ {2,}/g, ' ')
     .trim();
 }

@@ -63,7 +63,7 @@ export const CATEGORIZATION_PROVIDERS: AIProvider[] = [GEMINI, GROQ, CEREBRAS, S
 export const SUMMARY_PROVIDERS: AIProvider[] = [GEMINI, GROQ, CEREBRAS, DEEPSEEK];
 
 /** Conclusions generation: quality preferred. */
-export const CONCLUSIONS_PROVIDERS: AIProvider[] = [GEMINI, SAMBANOVA, GROQ, DEEPSEEK];
+export const CONCLUSIONS_PROVIDERS: AIProvider[] = [GROQ, GEMINI, SAMBANOVA, DEEPSEEK];
 
 /** Filter to providers whose API key env var is set. */
 export function getAvailableProviders(providers: AIProvider[]): AIProvider[] {
