@@ -29,6 +29,14 @@ export function generateCollectionMarkdown(collection: Collection, tweets: Tweet
     lines.push('');
   }
 
+  if (collection.ai_key_people && collection.ai_key_people.length > 0) {
+    lines.push('## Key People');
+    for (const person of collection.ai_key_people as { handle: string; reason: string }[]) {
+      lines.push(`- **@${person.handle}** — ${person.reason}`);
+    }
+    lines.push('');
+  }
+
   if (tweets.length > 0) {
     lines.push('## Sources');
     for (const tweet of tweets) {
