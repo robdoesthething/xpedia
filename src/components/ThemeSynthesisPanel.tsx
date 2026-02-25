@@ -24,10 +24,13 @@ export default function ThemeSynthesisPanel({ themeId, theme, digests, newTweetC
     setError(null);
     const res = await fetch(`/api/themes/${themeId}/synthesise`, { method: 'POST' });
     setLoading(false);
+    const body = await res.json().catch(() => ({}));
     if (res.ok) {
+      if (body.warnings?.length) {
+        setError(body.warnings.join(' '));
+      }
       router.refresh();
     } else {
-      const body = await res.json().catch(() => ({}));
       setError(body.error ?? 'Synthesis failed. Please try again.');
     }
   }

@@ -1,10 +1,10 @@
 import { logAiCall } from './ai-logger';
 import {
-    type AIProvider,
-    CATEGORIZATION_PROVIDERS,
-    CONCLUSIONS_PROVIDERS,
-    getAvailableProviders,
-    SUMMARY_PROVIDERS,
+  type AIProvider,
+  CATEGORIZATION_PROVIDERS,
+  CONCLUSIONS_PROVIDERS,
+  getAvailableProviders,
+  SUMMARY_PROVIDERS,
 } from './ai-providers';
 import { sanitizeForPrompt } from './sanitize';
 
@@ -444,32 +444,37 @@ Return ONLY a JSON array: [{"handle": "username_without_@", "reason": "..."}, ..
     const messages: ChatMessage[] = [
       {
         role: 'system',
-        content: `Synthesise a knowledge brief from curated tweets. Produce 5-8 insights in THREE tiers:
+        content: `Synthesise a knowledge brief from curated tweets. Your output will be stored as .md reference material for LLMs working on related tasks. Produce 5-8 insights in THREE tiers:
 
 TIER 1 — CONSENSUS (things multiple sources agree on):
-These are the strongest signals. Start each with "✅ ".
+The strongest signals. Start each with "✅ ".
 
-TIER 2 — STANDOUT TACTICS (unique techniques with proven results):
-Specific techniques from individual sources with measured outcomes. Start each with "⚡ ".
+TIER 2 — STANDOUT TACTICS (unique techniques worth capturing):
+Specific techniques, workflows, or frameworks. Start each with "⚡ ".
 
 TIER 3 — CONTRARIAN (ideas that challenge conventional wisdom):
 Flag these explicitly. Start each with "⚠️ ".
 
+INSIGHT FORMAT — each insight must contain:
+1. WHAT the technique/principle is (one sentence).
+2. HOW to apply it — enough detail that someone could act on this insight alone without seeing the original tweet. Include step-by-step breakdowns, specific tool names, prompt text, or configuration details when present.
+3. WHY it matters — what problem it solves or what outcome it enables.
+
 RULES:
-- Every insight includes specific numbers, frameworks, or quoted techniques.
-- NEVER reference @handles, Twitter accounts, or sources. No "one source suggests" or "a contributor shared". Write the substance as standalone facts.
+- Copy numbers, percentages, and benchmarks ONLY if they appear verbatim in the tweets. NEVER invent or estimate statistics.
+- Include frameworks IN FULL — list every step, not "use the X framework".
+- Include prompts or templates verbatim when present. Use blockquote formatting (> ...) for direct quotes.
+- NEVER reference @handles or sources. Write the substance as standalone knowledge.
 - NEVER use hedging: "appears to", "seems to", "could be", "it's unclear". State facts or omit.
-- Order by impact within each tier.
-- Include frameworks in full — never say "there's a framework" without listing its steps.
-- SKIP spam, scam links, and pure self-promotion. Do not include them in any tier.
-- If the collection lacks genuine consensus (TIER 1), omit that tier entirely rather than fabricating agreement.
+- SKIP spam, scam links, and pure self-promotion.
+- If the collection lacks genuine consensus (TIER 1), omit that tier rather than fabricating agreement.
 
 Return ONLY a JSON array of strings: ["✅ insight...", "⚡ insight...", "⚠️ insight...", ...]`,
       },
       { role: 'user', content: tweetBlock },
     ];
 
-    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 1000, 0.7);
+    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 1500, 0.7);
     if (!result) return null;
 
     logAiCall({ userId, provider: result.provider, operation: 'insights', tokensIn: result.tokensIn, tokensOut: result.tokensOut });

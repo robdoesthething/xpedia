@@ -75,22 +75,42 @@ export async function POST(
 
   // Run synthesis and digest in parallel
   const [insights, keyPeople, digestResult] = await Promise.all([
-    aiRouter.generateInsights(tweetInputs, user.id),
-    aiRouter.generateKeyPeople(tweetInputs, user.id),
+    aiRouter.generateInsights(tweetInputs, user.id).catch((err) => {
+      console.error('[AI] generateInsights threw:', err);
+      return null;
+    }),
+    aiRouter.generateKeyPeople(tweetInputs, user.id).catch((err) => {
+      console.error('[AI] generateKeyPeople threw:', err);
+      return null;
+    }),
     newTweetInputs.length > 0
-      ? aiRouter.generateDigest(newTweetInputs, user.id)
+      ? aiRouter.generateDigest(newTweetInputs, user.id).catch((err) => {
+        console.error('[AI] generateDigest threw:', err);
+        return null;
+      })
       : Promise.resolve(null),
   ]);
 
-  const now = new Date().toISOString();
+  console.log(
+    `[Synthesis] theme=${id} tweets=${allTweets.length} insights=${insights?.length ?? 'FAILED'} keyPeople=${keyPeople?.length ?? 'FAILED'} digest=${digestResult ? 'ok' : 'skipped/failed'}`
+  );
 
-  // Save synthesis to themes
-  const { error: themeErr } = await service.from('themes').update({
-    ai_insights: insights ?? [],
-    ai_key_people: keyPeople ?? [],
+  const now = new Date().toISOString();
+  const warnings: string[] = [];
+  if (!insights) warnings.push('Insights generation failed — previous insights preserved.');
+  if (!keyPeople) warnings.push('Key people generation failed — previous data preserved.');
+
+  // Only overwrite fields that succeeded — don't wipe good data with [] on failure
+  const updatePayload: Record<string, unknown> = {
     synthesis_updated_at: now,
     last_tweet_count: allTweets.length,
-  }).eq('id', id).eq('user_id', user.id);
+  };
+  if (insights) updatePayload.ai_insights = insights;
+  if (keyPeople) updatePayload.ai_key_people = keyPeople;
+
+  const { error: themeErr } = await service.from('themes')
+    .update(updatePayload)
+    .eq('id', id).eq('user_id', user.id);
 
   if (themeErr) {
     console.error('[AI] Failed to save theme synthesis:', themeErr.message);
@@ -109,5 +129,10 @@ export async function POST(
     if (digestErr) console.error('[AI] Failed to insert digest:', digestErr.message);
   }
 
-  return Response.json({ ok: true, insights: insights?.length ?? 0 });
+  return Response.json({
+    ok: true,
+    insights: insights?.length ?? 0,
+    keyPeople: keyPeople?.length ?? 0,
+    ...(warnings.length > 0 ? { warnings } : {}),
+  });
 }
