@@ -9,7 +9,7 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 export async function GET() {
   const auth = await requireUser();
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  const { user, supabase } = auth;
+  const { supabase } = auth;
 
   const { data, error } = await supabase
     .from('themes')
