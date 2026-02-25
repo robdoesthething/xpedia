@@ -49,28 +49,32 @@ function formatTweetBlock(tweets: { author_handle: string; content: string }[]):
 }
 
 /**
- * Post-process AI insight text to strip unverified metric claims that models
- * copy from source tweets despite prompt instructions. Patterns removed:
- * - "— 25% increase in clarity" (dash-separated metric claims)
- * - "50% reduction in research time" (standalone percentage claims)
- * - "$5,000 potential value" (dollar amounts)
- * - "3x faster" / "10x improvement" (multiplier claims)
+ * Post-process AI insight text to strip unverified metric claims.
+ * Uses Unicode escapes for dash characters to avoid encoding issues.
  */
 function stripMetricClaims(text: string): string {
+  // Dash character class: em-dash (U+2014), en-dash (U+2013), hyphen-minus
+  const D = '[\u2014\u2013\\-]';
   return text
-    // Any em-dash/dash followed by text containing a percentage: "— 25% improvement in X."
-    .replace(/\s*[—–-]+\s*[^.]*\d+%[^.]*\./gi, '.')
-    // Any em-dash/dash followed by a dollar amount: "— $5,000 potential value."
-    .replace(/\s*[—–-]+\s*\$[\d,]+[^.]*\./gi, '.')
-    // Any em-dash/dash followed by "expected": "— expected result of..."
-    .replace(/\s*[—–-]+\s*expected\s+[^.]*\./gi, '.')
-    // Any em-dash/dash followed by Nx multiplier: "— 3x faster."
-    .replace(/\s*[—–-]+\s*\d+x\s+[^.]*\./gi, '.')
-    // Standalone mid-sentence percentage claims without dashes: "achieving 90% success rate"
-    .replace(/\b\d+%\s+(success rate|hit rate|improvement|increase|decrease|reduction|accuracy|effectiveness|failure rate)[^,.]*/gi, '')
+    // "— expected measurable result: ..." or "— expected result: ..." or "— expected outcome: ..."
+    .replace(new RegExp(`\\s*${D}+\\s*expected\\s+[^.]*\\.`, 'gi'), '.')
+    // Any dash followed by text containing a percentage: "— 25% improvement in X."
+    .replace(new RegExp(`\\s*${D}+\\s*[^.]*\\d+%[^.]*\\.`, 'gi'), '.')
+    // Any dash followed by a dollar amount: "— $5,000 potential value."
+    .replace(new RegExp(`\\s*${D}+\\s*\\$[\\d,]+[^.]*\\.`, 'gi'), '.')
+    // Any dash followed by Nx multiplier: "— 3x faster."
+    .replace(new RegExp(`\\s*${D}+\\s*\\d+x\\s+[^.]*\\.`, 'gi'), '.')
+    // Standalone "expected measurable result:" anywhere (no dash needed)
+    .replace(/expected measurable result:[^.]*/gi, '')
+    // Standalone dollar amounts like "$5,000" anywhere
+    .replace(/\$[\d,]+(?:\.\d+)?(?:\s*(?:potential|value|worth|budget|cost|ROI|per|\/M)[^,.]*)*/gi, '')
+    // Standalone percentage claims: "100% hit rate", "90% success rate"
+    .replace(/\d+%\s+(?:success rate|hit rate|improvement|increase|decrease|reduction|accuracy|effectiveness|failure rate)[^,.]*/gi, '')
     // Clean up orphaned double spaces and punctuation
     .replace(/\.\s*\./g, '.')
     .replace(/,\s*\./g, '.')
+    .replace(/:\s*\./g, '.')
+    .replace(/\s+\./g, '.')
     .replace(/ {2,}/g, ' ')
     .trim();
 }
@@ -392,13 +396,14 @@ RULES:
 - Every action includes at least one specific number, formula, or framework from the tweets.
 - Include complete frameworks — never say "use the framework" without listing its steps.
 - NEVER reference @handles, sources, or authors. No "as shared by" or "according to". Output the substance, not attribution.
+- NEVER include percentages, dollar amounts, multipliers, or outcome predictions. No "25% improvement", "$5,000 value", "expected result". Describe ONLY what to do and how.
 - If two tweets suggest the same action, merge them into one conclusion. Never list the same advice twice.
 - SKIP any tweet that is spam, a scam link, or pure self-promotion with no actionable content.
 - Order from highest-impact to lowest-impact.
 - If fewer than 2 genuine actions can be extracted, return: ["Insufficient actionable content in this collection."]
 
 FORMAT: Each action should follow this pattern:
-"[Verb] [specific action] — [expected measurable result]. [Any supporting detail or framework steps]."
+"[Verb] [specific action]. [Supporting detail, framework steps, or tool names]."
 
 Return ONLY a JSON array of strings: ["action 1", "action 2", ...]`,
       },
@@ -418,7 +423,7 @@ Return ONLY a JSON array of strings: ["action 1", "action 2", ...]`,
       console.error('[AI] Invalid conclusions response:', result.content);
       return null;
     }
-    return parsed.map(String);
+    return parsed.map(String).map(stripMetricClaims);
   },
   /**
    * Identify the most valuable contributors to follow based on their tweets in this collection.
