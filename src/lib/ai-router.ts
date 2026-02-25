@@ -48,6 +48,19 @@ function formatTweetBlock(tweets: { author_handle: string; content: string }[]):
     .join('\n');
 }
 
+
+/**
+ * Parse and clean JSON from an AI response.
+ * Returns null (and logs) if parsing fails.
+ */
+function parseAiJson<T>(raw: string, operationName: string): T | null {
+  try {
+    return JSON.parse(cleanJson(raw)) as T;
+  } catch {
+    console.error(`[AI] Failed to parse ${operationName} JSON:`, raw);
+    return null;
+  }
+}
 async function callProvider(
   provider: AIProvider,
   messages: ChatMessage[],
@@ -200,22 +213,19 @@ Respond with ONLY valid JSON: {"theme_name": "...", "collection_name": "...", "s
 
     logAiCall({ userId, provider: result.provider, operation: 'categorize', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
 
-    try {
-      const parsed = JSON.parse(cleanJson(result.content));
-      if (!parsed.theme_name || !parsed.collection_name || !parsed.summary) {
-        console.error('[AI] Invalid categorization response:', result.content);
-        return null;
-      }
-      return {
-        theme_name: String(parsed.theme_name).trim(),
-        collection_name: String(parsed.collection_name).trim(),
-        summary: String(parsed.summary).trim(),
-        provider: result.provider,
-      };
-    } catch {
-      console.error('[AI] Failed to parse categorization JSON:', result.content);
+    const parsed = parseAiJson<{ theme_name: string; collection_name: string; summary: string }>(
+      result.content, 'categorization'
+    );
+    if (!parsed?.theme_name || !parsed.collection_name || !parsed.summary) {
+      console.error('[AI] Invalid categorization response:', result.content);
       return null;
     }
+    return {
+      theme_name: String(parsed.theme_name).trim(),
+      collection_name: String(parsed.collection_name).trim(),
+      summary: String(parsed.summary).trim(),
+      provider: result.provider,
+    };
   },
 
   /**
@@ -371,17 +381,12 @@ Return ONLY a JSON array of strings: ["action 1", "action 2", ...]`,
 
     logAiCall({ userId, provider: result.provider, operation: 'conclude', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
 
-    try {
-      const parsed = JSON.parse(cleanJson(result.content));
-      if (!Array.isArray(parsed) || parsed.length === 0) {
-        console.error('[AI] Invalid conclusions response:', result.content);
-        return null;
-      }
-      return parsed.map(String);
-    } catch {
-      console.error('[AI] Failed to parse conclusions JSON:', result.content);
+    const parsed = parseAiJson<unknown[]>(result.content, 'conclusions');
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      console.error('[AI] Invalid conclusions response:', result.content);
       return null;
     }
+    return parsed.map(String);
   },
   /**
    * Identify the most valuable contributors to follow based on their tweets in this collection.
@@ -415,19 +420,14 @@ Return ONLY a JSON array: [{"handle": "username_without_@", "reason": "..."}, ..
 
     logAiCall({ userId, provider: result.provider, operation: 'key_people', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
 
-    try {
-      const parsed = JSON.parse(cleanJson(result.content));
-      if (!Array.isArray(parsed)) return null;
-      return parsed
-        .filter((p: unknown) => p && typeof p === 'object' && 'handle' in p && 'reason' in p)
-        .map((p: { handle: unknown; reason: unknown }) => ({
-          handle: String(p.handle).replace(/^@/, ''),
-          reason: String(p.reason),
-        }));
-    } catch {
-      console.error('[AI] Failed to parse key_people JSON:', result.content);
-      return null;
-    }
+    const parsed = parseAiJson<unknown[]>(result.content, 'key_people');
+    if (!Array.isArray(parsed)) return null;
+    return parsed
+      .filter((p: unknown) => p && typeof p === 'object' && 'handle' in p && 'reason' in p)
+      .map((p) => {
+        const q = p as { handle: unknown; reason: unknown };
+        return { handle: String(q.handle).replace(/^@/, ''), reason: String(q.reason) };
+      });
   },
 
   async generateInsights(
@@ -469,14 +469,9 @@ Return ONLY a JSON array of strings: ["✅ insight...", "⚡ insight...", "⚠�
 
     logAiCall({ userId, provider: result.provider, operation: 'insights', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
 
-    try {
-      const parsed = JSON.parse(cleanJson(result.content));
-      if (!Array.isArray(parsed)) return null;
-      return parsed.map(String);
-    } catch {
-      console.error('[AI] Failed to parse insights JSON:', result.content);
-      return null;
-    }
+    const parsed = parseAiJson<unknown[]>(result.content, 'insights');
+    if (!Array.isArray(parsed)) return null;
+    return parsed.map(String);
   },
 
   async generateDigest(
@@ -504,24 +499,19 @@ Return ONLY valid JSON: {"kta": [...], "new_voices": [...]}`,
 
     logAiCall({ userId, provider: result.provider, operation: 'digest', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
 
-    try {
-      const parsed = JSON.parse(cleanJson(result.content));
-      if (!parsed.kta || !parsed.new_voices) return null;
-      return {
-        kta: Array.isArray(parsed.kta) ? parsed.kta.map(String) : [],
-        new_voices: Array.isArray(parsed.new_voices)
-          ? parsed.new_voices
-            .filter((p: unknown) => p && typeof p === 'object' && 'handle' in p && 'reason' in p)
-            .map((p: { handle: unknown; reason: unknown }) => ({
-              handle: String(p.handle).replace(/^@/, ''),
-              reason: String(p.reason),
-            }))
-          : [],
-      };
-    } catch {
-      console.error('[AI] Failed to parse digest JSON:', result.content);
-      return null;
-    }
+    const parsed = parseAiJson<{ kta: unknown[]; new_voices: unknown[] }>(result.content, 'digest');
+    if (!parsed?.kta || !parsed.new_voices) return null;
+    return {
+      kta: Array.isArray(parsed.kta) ? parsed.kta.map(String) : [],
+      new_voices: Array.isArray(parsed.new_voices)
+        ? parsed.new_voices
+          .filter((p: unknown) => p && typeof p === 'object' && 'handle' in p && 'reason' in p)
+          .map((p) => {
+            const q = p as { handle: unknown; reason: unknown };
+            return { handle: String(q.handle).replace(/^@/, ''), reason: String(q.reason) };
+          })
+        : [],
+    };
   },
 
 };
