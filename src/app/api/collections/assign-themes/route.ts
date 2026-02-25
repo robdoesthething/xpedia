@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient, type SupabaseServiceClient } from '@/lib/supabase/service';
 import { aiRouter } from '@/lib/ai-router';
 import { validateOrigin, csrfForbidden } from '@/lib/csrf';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 /**
  * POST /api/collections/assign-themes
@@ -23,12 +23,7 @@ export async function POST(request: Request) {
 
   // 3 assign-theme calls per minute per user
   const rl = checkRateLimit(`assign-themes:${user.id}`, 3, 60_000);
-  if (!rl.allowed) {
-    return Response.json(
-      { error: 'Too many requests. Please wait.' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
-    );
-  }
+  if (!rl.allowed) return rateLimitResponse(rl, 'Too many requests. Please wait.');
 
   const service = createServiceClient();
 

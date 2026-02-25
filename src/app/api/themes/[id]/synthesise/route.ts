@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { aiRouter } from '@/lib/ai-router';
 import { validateOrigin, csrfForbidden } from '@/lib/csrf';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import type { NextRequest } from 'next/server';
 
 export const maxDuration = 60;
@@ -19,12 +19,7 @@ export async function POST(
 
   // 3 synthesis requests per minute per user
   const rl = checkRateLimit(`synthesise:${user.id}`, 3, 60_000);
-  if (!rl.allowed) {
-    return Response.json(
-      { error: 'Too many requests. Please wait before synthesising again.' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
-    );
-  }
+  if (!rl.allowed) return rateLimitResponse(rl, 'Too many requests. Please wait before synthesising again.');
 
   const service = createServiceClient();
 

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { validateOrigin, csrfForbidden } from '@/lib/csrf';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 
 /**
  * GET /api/themes — List user's themes with collection count.
@@ -52,12 +52,7 @@ export async function POST(request: Request) {
 
   // 10 theme creates per minute per user
   const rl = checkRateLimit(`themes:${user.id}`, 10, 60_000);
-  if (!rl.allowed) {
-    return Response.json(
-      { error: 'Too many requests. Please wait.' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
-    );
-  }
+  if (!rl.allowed) return rateLimitResponse(rl, 'Too many requests. Please wait.');
 
   let body: { name: string };
   try {

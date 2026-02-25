@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClientFromToken } from '@/lib/supabase/api';
 import { getCorsHeaders, corsOptions } from '@/lib/cors';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import type { CapturedTweet } from '@/types/database';
 
 const MAX_TWEETS_PER_REQUEST = 100;
@@ -41,12 +41,7 @@ export async function POST(request: NextRequest) {
 
   // 10 capture requests per minute per user
   const rl = checkRateLimit(`tweets:${user.id}`, 10, 60_000);
-  if (!rl.allowed) {
-    return Response.json(
-      { error: 'Too many requests. Please wait before sending more tweets.' },
-      { status: 429, headers: { ...cors, 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
-    );
-  }
+  if (!rl.allowed) return rateLimitResponse(rl, 'Too many requests. Please wait before sending more tweets.', cors);
 
   let body: { tweets: CapturedTweet[] };
   try {

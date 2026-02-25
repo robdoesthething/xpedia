@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { aiRouter } from '@/lib/ai-router';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { validateOrigin, csrfForbidden } from '@/lib/csrf';
 import { scrapeArticleBody } from '@/lib/article-scraper';
 
@@ -28,12 +28,7 @@ export async function POST(request: Request) {
 
   // 3 categorize calls per minute per user
   const rl = checkRateLimit(`categorize:${user.id}`, 3, 60_000);
-  if (!rl.allowed) {
-    return Response.json(
-      { error: 'Too many requests. Please wait before categorizing again.' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil(rl.retryAfterMs / 1000)) } }
-    );
-  }
+  if (!rl.allowed) return rateLimitResponse(rl, 'Too many requests. Please wait before categorizing again.');
 
   // Fetch uncategorized tweets with rich fields
   const { data: tweets, error: tweetsErr } = await supabase

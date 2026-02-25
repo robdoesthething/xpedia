@@ -32,3 +32,24 @@ export function checkRateLimit(
   entry.count++;
   return { allowed: true, retryAfterMs: 0 };
 }
+
+/**
+ * Returns a 429 Response with Retry-After header.
+ * Pass extra headers (e.g. CORS) via the third argument.
+ */
+export function rateLimitResponse(
+  result: { retryAfterMs: number },
+  message = 'Too many requests. Please wait.',
+  extraHeaders?: Record<string, string>
+): Response {
+  return Response.json(
+    { error: message },
+    {
+      status: 429,
+      headers: {
+        ...extraHeaders,
+        'Retry-After': String(Math.ceil(result.retryAfterMs / 1000)),
+      },
+    }
+  );
+}
