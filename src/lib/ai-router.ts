@@ -61,6 +61,20 @@ function parseAiJson<T>(raw: string, operationName: string): T | null {
     return null;
   }
 }
+/**
+ * Returns the main text body of a tweet: thread content joined by separators,
+ * or the raw content for plain tweets. Applies sanitization.
+ */
+function buildRichTweetText(tweet: {
+  content: string;
+  content_type?: string;
+  thread_content?: { content: string }[] | null;
+}): string {
+  if (tweet.content_type === 'thread' && tweet.thread_content?.length) {
+    return tweet.thread_content.map((t) => sanitizeForPrompt(t.content)).join('\n---\n');
+  }
+  return sanitizeForPrompt(tweet.content);
+}
 async function callProvider(
   provider: AIProvider,
   messages: ChatMessage[],
@@ -180,13 +194,7 @@ ${collectionsContext}
 Respond with ONLY valid JSON: {"theme_name": "...", "collection_name": "...", "summary": "..."}`;
 
     const handle = sanitizeForPrompt(tweet.author_handle, 100);
-    let textContent = `@${handle}: `;
-
-    if (tweet.content_type === 'thread' && tweet.thread_content?.length) {
-      textContent += tweet.thread_content.map((t) => sanitizeForPrompt(t.content)).join('\n---\n');
-    } else {
-      textContent += sanitizeForPrompt(tweet.content);
-    }
+    let textContent = `@${handle}: ${buildRichTweetText(tweet)}`;
 
     if (tweet.content_type === 'article') {
       if (tweet.article_title) textContent = `[Article: ${sanitizeForPrompt(tweet.article_title, 200)}]\n` + textContent;
@@ -244,10 +252,7 @@ Respond with ONLY valid JSON: {"theme_name": "...", "collection_name": "...", "s
     },
     userId?: string
   ): Promise<string | null> {
-    let rawText = sanitizeForPrompt(tweet.content);
-    if (tweet.content_type === 'thread' && tweet.thread_content?.length) {
-      rawText = tweet.thread_content.map((t) => sanitizeForPrompt(t.content)).join('\n---\n');
-    }
+    let rawText = buildRichTweetText(tweet);
     if (tweet.content_type === 'article') {
       if (tweet.article_title) rawText = `[Article: ${sanitizeForPrompt(tweet.article_title, 200)}]\n` + rawText;
       if (tweet.article_description) rawText += `\n${sanitizeForPrompt(tweet.article_description, 500)}`;
