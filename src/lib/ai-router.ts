@@ -48,6 +48,30 @@ function formatTweetBlock(tweets: { author_handle: string; content: string }[]):
     .join('\n');
 }
 
+/**
+ * Post-process AI insight text to strip unverified metric claims that models
+ * copy from source tweets despite prompt instructions. Patterns removed:
+ * - "— 25% increase in clarity" (dash-separated metric claims)
+ * - "50% reduction in research time" (standalone percentage claims)
+ * - "$5,000 potential value" (dollar amounts)
+ * - "3x faster" / "10x improvement" (multiplier claims)
+ */
+function stripMetricClaims(text: string): string {
+  return text
+    // "— 80% improvement in clarity" or "- 25% increase in X"
+    .replace(/\s*[—–-]+\s*\$?\d[\d,.]*%?\s*(increase|decrease|improvement|reduction|drop|boost|gain|faster|slower|better|worse|more|less|hit rate)[^.]*\./gi, '.')
+    // "expected X of Y%" or "expected result of..." 
+    .replace(/\s*[—–-]+\s*expected\s+[^.]*\./gi, '.')
+    // standalone "$5,000 value" / "$5,000 potential"
+    .replace(/\s*[—–-]+\s*\$[\d,]+[^.]*\./gi, '.')
+    // "100% hit rate" anywhere in text
+    .replace(/\d+%\s+hit\s+rate/gi, 'consistent results')
+    // Clean up orphaned double spaces and punctuation
+    .replace(/\.\s*\./g, '.')
+    .replace(/ {2,}/g, ' ')
+    .trim();
+}
+
 
 /**
  * Parse and clean JSON from an AI response.
@@ -454,22 +478,14 @@ TIER EMOJIS:
 ⚡ = Unique tactic from a single source worth capturing
 ⚠️ = Challenges conventional wisdom
 
-CRITICAL RULES:
-- STRIP ALL UNVERIFIED CLAIMS. Tweets routinely contain invented or aspirational metrics ("80% improvement", "$5,000 value", "3x faster", "90% reduction"). These are marketing language, not data. Drop every percentage, dollar figure, and multiplier unless it comes from a cited study or benchmark with a named source. Describe the technique WITHOUT any numeric outcome claims.
-- DO NOT predict outcomes or results. No "this leads to", "expected result", "you'll see". Describe ONLY the technique and its mechanics.
-- DO NOT mention @handles, sources, or attribution.
-- DO NOT hedge. No "appears to", "seems to", "could be".
+RULES:
+- ZERO METRICS. Never include percentages, dollar amounts, or multipliers. No "25% increase", "$5,000 value", "3x faster". These are marketing claims, not facts. Describe techniques ONLY.
+- ZERO OUTCOME PREDICTIONS. No "this leads to", "expected result", "you'll see", "improvement in". Describe the HOW, never the imagined result.
 - When a tweet contains a verbatim prompt or template → quote it using markdown.
 - When a tweet names a framework with steps → list ALL steps.
 - When a tweet names specific tools → include tool names and their role.
-- SKIP spam, scam links, and pure self-promotion.
-- If no genuine consensus exists, omit ✅ tier rather than fabricating agreement.
-
-BAD (contains unverified stats from tweets):
-"Set a 2-hour timer to research prompts — 90% reduction in research time. Use the 7-point framework."
-
-GOOD (same technique, stats stripped, detail added):
-"⚡ **Time-boxed prompt crafting**: Allocate a fixed 2-hour block for prompt research and iteration. Structure the session in 7 steps: (1) define the topic, (2) identify key questions, (3) gather relevant data, (4) analyze patterns, (5) draw conclusions, (6) identify gaps in coverage, (7) refine the prompt based on gaps found. This replaces open-ended research sessions that lack concrete deliverables."
+- DO NOT mention @handles, sources, or attribution.
+- SKIP spam, scam links, and self-promotion.
 
 Return ONLY a JSON array of strings.`,
       },
@@ -483,7 +499,7 @@ Return ONLY a JSON array of strings.`,
 
     const parsed = parseAiJson<unknown[]>(result.content, 'insights');
     if (!Array.isArray(parsed)) return null;
-    return parsed.map(String);
+    return parsed.map(String).map(stripMetricClaims);
   },
 
   async generateDigest(
