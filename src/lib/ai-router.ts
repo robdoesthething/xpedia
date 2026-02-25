@@ -473,13 +473,12 @@ Return ONLY a JSON array: [{"handle": "username_without_@", "reason": "..."}, ..
         role: 'system',
         content: `You distill curated tweets into a dense knowledge brief. Your output is stored as .md reference material that LLMs consume to execute tasks — so every insight must contain enough detail to act on WITHOUT the original tweets.
 
-FORMAT: Produce 5-8 insights. Each insight is a standalone paragraph following this structure:
-"[TIER EMOJI] **[Technique name]**: [What it is and when to use it]. [Step-by-step how-to with enough detail to execute]. [What this replaces or improves upon]."
+STEP 1 — IDENTIFY KNOWLEDGE AREAS:
+Read all tweets and identify 3-6 distinct knowledge areas they cover (e.g., "Prompt Engineering", "Research Methods", "AI Tools", "Content Strategy"). Areas must be mutually exclusive (no insight fits two areas) and collectively exhaustive (every substantive tweet maps to an area).
 
-TIER EMOJIS:
-✅ = Multiple sources converge on this (strongest signal)
-⚡ = Unique tactic from a single source worth capturing
-⚠️ = Challenges conventional wisdom
+STEP 2 — PRODUCE INSIGHTS:
+Write 5-8 insights total, distributed across the areas you identified. Each insight is a standalone paragraph:
+"**[Area Name]** — **[Technique name]**: [What it is and when to use it]. [Step-by-step how-to with enough detail to execute]. [What this replaces or improves upon]."
 
 RULES:
 - ZERO METRICS. Never include percentages, dollar amounts, or multipliers. No "25% increase", "$5,000 value", "3x faster". These are marketing claims, not facts. Describe techniques ONLY.
