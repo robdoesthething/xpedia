@@ -99,7 +99,7 @@ export default function TweetListWithMove({
                 <div className="flex items-center gap-4">
                   <MoveTweetButton
                     tweetId={tweet.id}
-                    currentCollectionId={null}
+                    currentCollectionId={tweet.collection_id}
                     collections={collections}
                     onMoved={handleMoved}
                   />
