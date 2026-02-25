@@ -1,11 +1,11 @@
-import {
-  type AIProvider,
-  CATEGORIZATION_PROVIDERS,
-  SUMMARY_PROVIDERS,
-  CONCLUSIONS_PROVIDERS,
-  getAvailableProviders,
-} from './ai-providers';
 import { logAiCall } from './ai-logger';
+import {
+    type AIProvider,
+    CATEGORIZATION_PROVIDERS,
+    CONCLUSIONS_PROVIDERS,
+    getAvailableProviders,
+    SUMMARY_PROVIDERS,
+} from './ai-providers';
 import { sanitizeForPrompt } from './sanitize';
 
 interface MessageContent {
@@ -41,10 +41,18 @@ function cleanJson(raw: string): string {
     .trim();
 }
 
+/** Format an array of tweets as a numbered list for AI prompts. */
+function formatTweetBlock(tweets: { author_handle: string; content: string }[]): string {
+  return tweets
+    .map((t, i) => `${i + 1}. @${sanitizeForPrompt(t.author_handle, 100)}: ${sanitizeForPrompt(t.content)}`)
+    .join('\n');
+}
+
 async function callProvider(
   provider: AIProvider,
   messages: ChatMessage[],
-  maxTokens: number
+  maxTokens: number,
+  temperature = 0.2
 ): Promise<{ content: string; tokensIn: number; tokensOut: number }> {
   const apiKey = process.env[provider.apiKeyEnvVar];
   if (!apiKey) throw new Error(`No API key for ${provider.name}`);
@@ -59,7 +67,7 @@ async function callProvider(
       model: provider.model,
       messages,
       max_tokens: maxTokens,
-      temperature: 0.2,
+      temperature,
     }),
   });
 
@@ -86,7 +94,8 @@ async function callProvider(
 async function callWithRotation(
   providers: AIProvider[],
   messages: ChatMessage[],
-  maxTokens: number
+  maxTokens: number,
+  temperature = 0.2
 ): Promise<{ content: string; provider: string; tokensIn: number; tokensOut: number } | null> {
   const available = getAvailableProviders(providers);
   if (available.length === 0) {
@@ -96,7 +105,7 @@ async function callWithRotation(
 
   for (const provider of available) {
     try {
-      const { content, tokensIn, tokensOut } = await callProvider(provider, messages, maxTokens);
+      const { content, tokensIn, tokensOut } = await callProvider(provider, messages, maxTokens, temperature);
       return { content, provider: provider.name, tokensIn, tokensOut };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -245,7 +254,8 @@ Rules:
 - If it has a named framework with steps → list the exact steps
 - If it has specific numbers, benchmarks, or formulas → include them precisely
 - If it contains a script, template, or checklist → quote it exactly
-- If the tweet is purely motivational or vague with no concrete takeaway → output exactly: "No specific content."
+- If the tweet references a resource (article, video, tool) without providing its content inline → extract only the resource name, URL, and one-line description of what it covers. Do not speculate about its contents.
+- If the tweet is spam, a scam, purely promotional with no substance, or motivational fluff with no concrete takeaway → output exactly: "SKIP"
 - DO NOT add commentary, paraphrase, or introduce the content. Output ONLY the extracted material.
 - Max 200 words.`,
       },
@@ -261,7 +271,8 @@ Rules:
     logAiCall({ userId, provider: result.provider, operation: 'extract', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
 
     const extracted = result.content.trim();
-    return extracted === 'No specific content.' ? null : extracted;
+    const skip = extracted.toUpperCase() === 'SKIP' || extracted === 'No specific content.';
+    return skip ? null : extracted;
   },
 
   /**
@@ -272,22 +283,38 @@ Rules:
     tweets: { author_handle: string; content: string }[],
     userId?: string
   ): Promise<string | null> {
-    const tweetBlock = tweets
-      .map((t, i) => `${i + 1}. @${sanitizeForPrompt(t.author_handle, 100)}: ${sanitizeForPrompt(t.content)}`)
-      .join('\n');
+    const tweetBlock = formatTweetBlock(tweets);
 
     const messages: ChatMessage[] = [
       {
         role: 'system',
-        content: `You extract and preserve the most valuable knowledge from curated tweet collections.
+        content: `You produce a concise knowledge brief from curated tweets. Your output will be used as reference material for LLMs working on related tasks.
 
-Write a reference summary for the "${collectionName}" collection. Rules:
-- Read every tweet carefully. If a tweet contains a reusable prompt, script, template, formula, or step-by-step process — quote it VERBATIM inside a blockquote (>). Do not paraphrase things that are more valuable in their original words.
-- Surface specific techniques, exact numbers, named frameworks, and concrete examples — not vague descriptions of them.
-- NEVER attribute to @handles or write "as shared by" / "as suggested by". Write the content as a reference document, not a list of who said what.
-- Note points of consensus and any notable contrarian takes.
-- Do NOT write in vague generalities. A reader should be able to act on this immediately.
-- Length: as long as needed to capture everything valuable — do not truncate to seem concise.`,
+Write a reference brief for the "${collectionName}" collection.
+
+STRUCTURE (use exactly these sections, skip any that would be empty):
+
+### Key Techniques & Frameworks
+Concrete methods, step-by-step processes, named frameworks. Quote verbatim when the original phrasing is more precise than a paraphrase. Use blockquotes (>) for direct quotes.
+
+### Numbers & Benchmarks
+All quantitative data: percentages, dollar amounts, durations, counts, scores. Present as a bullet list.
+
+### Tools & Resources
+Specific tools, libraries, APIs, or resources mentioned with what they do.
+
+### Open Questions & Gaps
+What the collection does NOT cover that a practitioner would need.
+
+ABSOLUTE RULES:
+- NEVER use hedging language: "appears to", "could imply", "it's unclear", "seems to suggest". State facts or omit.
+- NEVER mention what's missing from tweets ("the list was not provided", "no framework was named"). If a tweet references something without providing it, either omit or note concisely in Open Questions.
+- NEVER attribute to @handles. No "as shared by", "according to", "as suggested by". Write the substance only.
+- NEVER repeat the same point in different words.
+- SKIP spam, scam links, and pure self-promotion entirely. Pretend they don't exist.
+- If the collection has fewer than 3 substantive tweets after filtering spam, write: "Insufficient signal — only [N] substantive tweets. Key points:" followed by a single bullet list.
+- Write in present tense, imperative mood where possible.
+- Length: proportional to signal density. 3 tweets = 3-5 sentences. 20 tweets = full structured brief.`,
       },
       {
         role: 'user',
@@ -295,7 +322,7 @@ Write a reference summary for the "${collectionName}" collection. Rules:
       },
     ];
 
-    const result = await callWithRotation(SUMMARY_PROVIDERS, messages, 1200);
+    const result = await callWithRotation(SUMMARY_PROVIDERS, messages, 1500);
     if (!result) return null;
 
     logAiCall({ userId, provider: result.provider, operation: 'summarize', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
@@ -311,9 +338,7 @@ Write a reference summary for the "${collectionName}" collection. Rules:
     tweets: { author_handle: string; content: string }[],
     userId?: string
   ): Promise<string[] | null> {
-    const tweetBlock = tweets
-      .map((t, i) => `${i + 1}. @${sanitizeForPrompt(t.author_handle, 100)}: ${sanitizeForPrompt(t.content)}`)
-      .join('\n');
+    const tweetBlock = formatTweetBlock(tweets);
 
     const messages: ChatMessage[] = [
       {
@@ -324,8 +349,11 @@ RULES:
 - Each action starts with an imperative verb (Raise, Add, Remove, Set, Test, Switch, Audit, Kill).
 - Every action includes at least one specific number, formula, or framework from the tweets.
 - Include complete frameworks — never say "use the framework" without listing its steps.
-- NEVER reference @handles, sources, or authors. Output the substance, not attribution.
+- NEVER reference @handles, sources, or authors. No "as shared by" or "according to". Output the substance, not attribution.
+- If two tweets suggest the same action, merge them into one conclusion. Never list the same advice twice.
+- SKIP any tweet that is spam, a scam link, or pure self-promotion with no actionable content.
 - Order from highest-impact to lowest-impact.
+- If fewer than 2 genuine actions can be extracted, return: ["Insufficient actionable content in this collection."]
 
 FORMAT: Each action should follow this pattern:
 "[Verb] [specific action] — [expected measurable result]. [Any supporting detail or framework steps]."
@@ -363,9 +391,7 @@ Return ONLY a JSON array of strings: ["action 1", "action 2", ...]`,
     userId?: string
   ): Promise<{ handle: string; reason: string }[] | null> {
     const handles = [...new Set(tweets.map((t) => `@${sanitizeForPrompt(t.author_handle, 100)}`))].join(', ');
-    const tweetBlock = tweets
-      .map((t, i) => `${i + 1}. @${sanitizeForPrompt(t.author_handle, 100)}: ${sanitizeForPrompt(t.content)}`)
-      .join('\n');
+    const tweetBlock = formatTweetBlock(tweets);
 
     const messages: ChatMessage[] = [
       {
@@ -384,7 +410,7 @@ Return ONLY a JSON array: [{"handle": "username_without_@", "reason": "..."}, ..
       { role: 'user', content: tweetBlock },
     ];
 
-    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 400);
+    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 400, 0.7);
     if (!result) return null;
 
     logAiCall({ userId, provider: result.provider, operation: 'key_people', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
@@ -408,7 +434,7 @@ Return ONLY a JSON array: [{"handle": "username_without_@", "reason": "..."}, ..
     tweets: { author_handle: string; content: string }[],
     userId?: string
   ): Promise<string[] | null> {
-    const tweetBlock = tweets.map((t, i) => `${i + 1}. @${sanitizeForPrompt(t.author_handle, 100)}: ${sanitizeForPrompt(t.content)}`).join('\n');
+    const tweetBlock = formatTweetBlock(tweets);
 
     const messages: ChatMessage[] = [
       {
@@ -426,16 +452,19 @@ Flag these explicitly. Start each with "⚠️ ".
 
 RULES:
 - Every insight includes specific numbers, frameworks, or quoted techniques.
-- NEVER reference @handles or sources. Output the substance only.
+- NEVER reference @handles, Twitter accounts, or sources. No "one source suggests" or "a contributor shared". Write the substance as standalone facts.
+- NEVER use hedging: "appears to", "seems to", "could be", "it's unclear". State facts or omit.
 - Order by impact within each tier.
 - Include frameworks in full — never say "there's a framework" without listing its steps.
+- SKIP spam, scam links, and pure self-promotion. Do not include them in any tier.
+- If the collection lacks genuine consensus (TIER 1), omit that tier entirely rather than fabricating agreement.
 
 Return ONLY a JSON array of strings: ["✅ insight...", "⚡ insight...", "⚠️ insight...", ...]`,
       },
       { role: 'user', content: tweetBlock },
     ];
 
-    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 1000);
+    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 1000, 0.7);
     if (!result) return null;
 
     logAiCall({ userId, provider: result.provider, operation: 'insights', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
@@ -454,7 +483,7 @@ Return ONLY a JSON array of strings: ["✅ insight...", "⚡ insight...", "⚠�
     tweets: { author_handle: string; content: string }[],
     userId?: string
   ): Promise<{ kta: string[]; new_voices: { handle: string; reason: string }[] } | null> {
-    const tweetBlock = tweets.map((t, i) => `${i + 1}. @${sanitizeForPrompt(t.author_handle, 100)}: ${sanitizeForPrompt(t.content)}`).join('\n');
+    const tweetBlock = formatTweetBlock(tweets);
 
     const messages: ChatMessage[] = [
       {
@@ -462,15 +491,15 @@ Return ONLY a JSON array of strings: ["✅ insight...", "⚡ insight...", "⚠�
         content: `You write a concise digest of newly added tweets — like a newsletter entry for what's new.
 
 Return JSON with exactly two keys:
-- "kta": array of 3-5 key takeaways and actions from these specific new tweets
-- "new_voices": array of up to 3 new contributors worth noting (people whose ideas stood out in this batch), each as {"handle": "...", "reason": "..."}
+- "kta": array of 3-5 key takeaways and actions from these specific new tweets. Skip spam, scam links, and pure self-promotion. Each takeaway must start with an action verb. If fewer than 2 genuine takeaways exist, return ["No significant new content in this batch."]
+- "new_voices": array of up to 3 new contributors worth noting (people whose ideas stood out in this batch), each as {"handle": "...", "reason": "..."}. Only include people who shared something concrete and actionable.
 
 Return ONLY valid JSON: {"kta": [...], "new_voices": [...]}`,
       },
       { role: 'user', content: tweetBlock },
     ];
 
-    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 600);
+    const result = await callWithRotation(CONCLUSIONS_PROVIDERS, messages, 600, 0.7);
     if (!result) return null;
 
     logAiCall({ userId, provider: result.provider, operation: 'digest', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
