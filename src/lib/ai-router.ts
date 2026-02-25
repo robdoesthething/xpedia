@@ -473,8 +473,11 @@ Return ONLY a JSON array: [{"handle": "username_without_@", "reason": "..."}, ..
         role: 'system',
         content: `You distill curated tweets into a dense knowledge brief. Your output is stored as .md reference material that LLMs consume to execute tasks — so every insight must contain enough detail to act on WITHOUT the original tweets.
 
-STEP 1 — IDENTIFY KNOWLEDGE AREAS:
-Read all tweets and identify 3-6 distinct knowledge areas they cover (e.g., "Prompt Engineering", "Research Methods", "AI Tools", "Content Strategy"). Areas must be mutually exclusive (no insight fits two areas) and collectively exhaustive (every substantive tweet maps to an area).
+STEP 1 — IDENTIFY KNOWLEDGE AREAS (MECE):
+Read all tweets and identify 3-5 distinct knowledge areas. Areas must be:
+- MUTUALLY EXCLUSIVE: Apply the swap test — if an insight could plausibly belong to two areas, MERGE those areas into one. For example, "Prompt Engineering" and "Prompt Optimization" must merge into one area. "AI Tools" and "Prompt Engineering" overlap because prompts use tools — pick the more specific one.
+- COLLECTIVELY EXHAUSTIVE: Every substantive tweet maps to exactly one area.
+- SUBJECT-BASED: Name areas by WHAT is studied (e.g., "Visual Design", "Market Analysis"), not HOW it is studied (avoid "Tools", "Methods", "Techniques" as standalone areas).
 
 STEP 2 — PRODUCE INSIGHTS:
 Write 5-8 insights total, distributed across the areas you identified. Each insight is a standalone paragraph:
@@ -482,10 +485,10 @@ Write 5-8 insights total, distributed across the areas you identified. Each insi
 
 RULES:
 - ZERO METRICS. Never include percentages, dollar amounts, or multipliers. No "25% increase", "$5,000 value", "3x faster". These are marketing claims, not facts. Describe techniques ONLY.
-- ZERO OUTCOME PREDICTIONS. No "this leads to", "expected result", "you'll see", "improvement in". Describe the HOW, never the imagined result.
-- When a tweet contains a verbatim prompt or template → quote it using markdown.
-- When a tweet names a framework with steps → list ALL steps.
-- When a tweet names specific tools → include tool names and their role.
+- ZERO OUTCOME PREDICTIONS. No "this leads to", "expected result", "you will see", "improvement in". Describe the HOW, never the imagined result.
+- When a tweet contains a verbatim prompt or template, quote it using markdown.
+- When a tweet names a framework with steps, list ALL steps.
+- When a tweet names specific tools, include tool names and their role.
 - DO NOT mention @handles, sources, or attribution.
 - SKIP spam, scam links, and self-promotion.
 
@@ -516,10 +519,10 @@ Return ONLY a JSON array of strings.`,
         content: `You write a concise digest of newly added tweets — like a newsletter entry for what's new.
 
 Return JSON with exactly two keys:
-- "kta": array of 3-5 key takeaways and actions from these specific new tweets. Skip spam, scam links, and pure self-promotion. Each takeaway must start with an action verb. If fewer than 2 genuine takeaways exist, return ["No significant new content in this batch."]
-- "new_voices": array of up to 3 new contributors worth noting (people whose ideas stood out in this batch), each as {"handle": "...", "reason": "..."}. Only include people who shared something concrete and actionable.
+    - "kta": array of 3 - 5 key takeaways and actions from these specific new tweets.Skip spam, scam links, and pure self - promotion.Each takeaway must start with an action verb.If fewer than 2 genuine takeaways exist, return ["No significant new content in this batch."]
+      - "new_voices": array of up to 3 new contributors worth noting(people whose ideas stood out in this batch), each as { "handle": "...", "reason": "..." }.Only include people who shared something concrete and actionable.
 
-Return ONLY valid JSON: {"kta": [...], "new_voices": [...]}`,
+Return ONLY valid JSON: { "kta": [...], "new_voices": [...] }`,
       },
       { role: 'user', content: tweetBlock },
     ];
