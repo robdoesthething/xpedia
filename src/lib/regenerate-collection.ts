@@ -1,16 +1,6 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { aiRouter } from '@/lib/ai-router';
 import type { Tweet } from '@/types/database';
-
-/** Create a service-role Supabase client for background operations (bypasses RLS). */
-function createServiceClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
-
-type SupabaseServiceClient = ReturnType<typeof createServiceClient>;
+import { createServiceClient, type SupabaseServiceClient } from '@/lib/supabase/service';
 
 type RawTweet = Pick<Tweet, 'id' | 'author_handle' | 'content' | 'content_type' | 'image_urls' | 'article_title' | 'article_description' | 'article_body' | 'thread_content' | 'extracted_content'>;
 
@@ -100,12 +90,14 @@ export async function regenerateCollectionDocument(
     return { author_handle: t.author_handle, content: enrichedContent };
   });
 
-  const [conclusions, keyPeople] = await Promise.all([
+  const [summary, conclusions, keyPeople] = await Promise.all([
+    aiRouter.generateSummary(collectionName, tweets, userId),
     aiRouter.generateConclusions(collectionName, tweets, userId),
     aiRouter.generateKeyPeople(tweets, userId),
   ]);
 
   const updates: Record<string, unknown> = { summary_updated_at: new Date().toISOString() };
+  if (summary) updates.ai_summary = summary;
   if (conclusions) updates.ai_conclusions = conclusions;
   if (keyPeople) updates.ai_key_people = keyPeople;
 

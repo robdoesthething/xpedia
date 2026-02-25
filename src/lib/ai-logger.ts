@@ -1,17 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-/** Module-level singleton — avoids creating a new admin client on every call. */
-let serviceClient: ReturnType<typeof createClient> | null = null;
-
-function getServiceClient() {
-  if (!serviceClient) {
-    serviceClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-  }
-  return serviceClient;
-}
+import { createServiceClient } from '@/lib/supabase/service';
 
 /** Fire-and-forget logging of AI provider calls to the ai_calls table. */
 export function logAiCall(params: {
@@ -21,7 +8,7 @@ export function logAiCall(params: {
   tokensIn: number;
   tokensOut: number;
 }) {
-  const supabase = getServiceClient();
+  const supabase = createServiceClient();
 
   supabase
     .from('ai_calls')

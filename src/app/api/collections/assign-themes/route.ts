@@ -1,15 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createServiceClient, type SupabaseServiceClient } from '@/lib/supabase/service';
 import { aiRouter } from '@/lib/ai-router';
 import { validateOrigin, csrfForbidden } from '@/lib/csrf';
 import { checkRateLimit } from '@/lib/rate-limit';
-
-function createServiceClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 /**
  * POST /api/collections/assign-themes
@@ -105,7 +98,7 @@ export async function POST(request: Request) {
 }
 
 async function resolveTheme(
-  supabase: ReturnType<typeof createServiceClient>,
+  supabase: SupabaseServiceClient,
   userId: string,
   themeName: string,
   themeMap: Map<string, string>

@@ -1,18 +1,11 @@
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase/service';
 import { aiRouter } from '@/lib/ai-router';
 import { validateOrigin, csrfForbidden } from '@/lib/csrf';
 import { checkRateLimit } from '@/lib/rate-limit';
 import type { NextRequest } from 'next/server';
 
 export const maxDuration = 60;
-
-function createServiceClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 export async function POST(
   _request: NextRequest,

@@ -1,14 +1,7 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createServiceClient } from '@/lib/supabase/service';
 import { ALL_PROVIDERS } from '@/lib/ai-providers';
-
-function createServiceClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
 
 type AiCallRow = {
   provider: string;

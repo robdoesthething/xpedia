@@ -1,5 +1,5 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { aiRouter } from '@/lib/ai-router';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -65,13 +65,6 @@ export async function POST(request: Request) {
   );
 
   return Response.json(result);
-}
-
-function createServiceClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
 }
 
 async function categorizeTweets(
