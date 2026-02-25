@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { aiRouter } from '@/lib/ai-router';
 import { validateOrigin, csrfForbidden } from '@/lib/csrf';
@@ -12,9 +12,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const auth = await requireUser();
+  if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const { user } = auth;
+
   if (!validateOrigin(_request)) return csrfForbidden();
 
   // 3 synthesis requests per minute per user

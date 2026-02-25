@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
 import { aiRouter } from '@/lib/ai-router';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
@@ -14,15 +14,9 @@ export const maxDuration = 60;
  * Runs synchronously so the caller gets a real result (not fire-and-forget).
  */
 export async function POST(request: Request) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const { user, supabase } = auth;
 
   if (!validateOrigin(request)) return csrfForbidden();
 

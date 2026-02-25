@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/supabase/server';
 import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function GET(request: Request) {
@@ -11,15 +11,9 @@ export async function GET(request: Request) {
     return Response.json({ results: [] });
   }
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const { user, supabase } = auth;
 
   // 30 search requests per minute per user
   const rl = checkRateLimit(`search:${user.id}`, 30, 60_000);

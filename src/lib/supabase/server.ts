@@ -27,3 +27,18 @@ export async function createClient() {
     }
   );
 }
+
+/**
+ * Validates the cookie-based session and returns the authenticated user
+ * alongside the Supabase client. Returns null if unauthenticated.
+ *
+ * Usage:
+ *   const auth = await requireUser();
+ *   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+ *   const { user, supabase } = auth;
+ */
+export async function requireUser() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user ? { user, supabase } : null;
+}

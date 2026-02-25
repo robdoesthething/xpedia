@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/supabase/server';
 import { createServiceClient, type SupabaseServiceClient } from '@/lib/supabase/service';
 import { aiRouter } from '@/lib/ai-router';
 import { validateOrigin, csrfForbidden } from '@/lib/csrf';
@@ -10,14 +10,9 @@ import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
  * Auth: Cookie-based.
  */
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const { user } = auth;
 
   if (!validateOrigin(request)) return csrfForbidden();
 
