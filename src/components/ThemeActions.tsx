@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ConfirmDeleteBar from '@/components/ConfirmDeleteBar';
 
 export default function ThemeActions({
   themeId,
@@ -82,25 +83,13 @@ export default function ThemeActions({
 
   if (confirmDelete) {
     return (
-      <div className="flex flex-col items-end gap-1">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-red-400">Delete theme? Collections become uncategorized.</span>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="border border-red-700 bg-red-900/50 font-mono text-xs tracking-widest text-red-300 uppercase px-3 py-1.5 hover:bg-red-900 transition-colors disabled:opacity-50"
-          >
-            {deleting ? 'Deleting...' : 'Confirm'}
-          </button>
-          <button
-            onClick={() => { setConfirmDelete(false); setDeleteError(null); }}
-            className="font-mono text-xs tracking-widest text-shadow uppercase hover:text-mist transition-colors px-2 py-1.5"
-          >
-            Cancel
-          </button>
-        </div>
-        {deleteError && <span className="font-mono text-xs text-red-400">{deleteError}</span>}
-      </div>
+      <ConfirmDeleteBar
+        message="Delete theme? Collections become uncategorized."
+        onConfirm={handleDelete}
+        onCancel={() => { setConfirmDelete(false); setDeleteError(null); }}
+        loading={deleting}
+        error={deleteError}
+      />
     );
   }
 

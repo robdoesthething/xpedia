@@ -2,6 +2,7 @@
 
 import { useReducer, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import ConfirmDeleteBar from '@/components/ConfirmDeleteBar';
 
 type Mode = 'idle' | 'editing' | 'confirming-delete';
 
@@ -170,22 +171,12 @@ export default function CollectionActions({
 
   if (state.mode === 'confirming-delete') {
     return (
-      <div className="flex items-center gap-2">
-        <span className="font-mono text-xs text-red-400">Delete? Items will become uncategorized.</span>
-        <button
-          onClick={handleDelete}
-          disabled={state.deleting}
-          className="border border-red-700 bg-red-900/50 font-mono text-xs tracking-widest text-red-300 uppercase px-3 py-1.5 hover:bg-red-900 transition-colors disabled:opacity-50"
-        >
-          {state.deleting ? 'Deleting...' : 'Confirm'}
-        </button>
-        <button
-          onClick={() => dispatch({ type: 'CANCEL_DELETE' })}
-          className="font-mono text-xs tracking-widest text-shadow uppercase hover:text-mist transition-colors px-2 py-1.5"
-        >
-          Cancel
-        </button>
-      </div>
+      <ConfirmDeleteBar
+        message="Delete? Items will become uncategorized."
+        onConfirm={handleDelete}
+        onCancel={() => dispatch({ type: 'CANCEL_DELETE' })}
+        loading={state.deleting}
+      />
     );
   }
 
