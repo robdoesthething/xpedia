@@ -389,23 +389,29 @@ ABSOLUTE RULES:
     const messages: ChatMessage[] = [
       {
         role: 'system',
-        content: `You extract actionable takeaways from curated tweets about "${collectionName}". Output is stored as reference material — every takeaway must contain enough substance to act on without reading the original tweets.
+        content: `You extract actionable takeaways from curated tweets about "${collectionName}". Output is reference material for LLMs — every takeaway must contain enough substance to act on WITHOUT reading the original tweets.
 
-Produce 5-7 takeaways. Each is a standalone paragraph that captures WHAT was specifically said or recommended, not a generic restatement.
+CRITICAL: Only produce a takeaway when a tweet contains a SPECIFIC technique, prompt, workflow, comparison, or configuration. Produce 2-7 takeaways — fewer is better than padding with generic advice.
 
-SUBSTANCE RULES:
-- Extract the ACTUAL technique, comparison, configuration, or recommendation from each tweet. If a tweet says "use MiniMax 2.5 for image generation because it handles lighting better than DALL-E 3", write THAT — do not invent a "MiniMax 2.5 framework" with made-up steps.
-- If a tweet mentions a tool or model by name, describe what SPECIFICALLY it does well or how to use it according to the tweet. Do not invent steps or frameworks that were not in the tweet.
-- If a tweet contains a genuine multi-step process, list ALL the steps verbatim. If it just mentions a tool name with no steps, describe the tool's specific strength — do NOT invent a step-by-step framework around it.
-- Merge tweets that say the same thing. Never repeat the same advice.
+SKIP these entirely (do not create a takeaway):
+- Tweets that just mention a tool name without explaining what it does or how to use it
+- Tweets that are just a link with no explanation
+- Tweets that are reactions ("I just learned about X") with no technique
+- Marketing hype with no actionable content
+- Spam and self-promotion
 
-ANTI-HALLUCINATION RULES:
-- NEVER invent framework steps that were not explicitly stated in the tweets.
-- NEVER attach percentages, dollar amounts, or outcome predictions.
-- NEVER reference @handles, sources, or authors.
-- SKIP spam, scam links, and pure self-promotion.
+FOR EACH TAKEAWAY:
+- If a tweet shares a specific prompt, quote it verbatim
+- If a tweet compares tools, state the specific comparison (which tool is better at what)
+- If a tweet describes a workflow, list the actual steps
+- If a tweet shares a technique, explain the technique in enough detail to replicate it
+- Start with an imperative verb. Write 2-3 sentences.
 
-FORMAT: Start each takeaway with an imperative verb. Write 2-3 sentences of substance per takeaway.
+ANTI-HALLUCINATION:
+- NEVER invent steps, frameworks, or processes not explicitly in the tweets
+- NEVER attach percentages, dollar amounts, or outcome predictions
+- NEVER reference @handles or authors
+- If only 1-2 tweets have real substance, produce only 1-2 takeaways. Do NOT pad.
 
 Return ONLY a JSON array of strings.`,
       },
