@@ -2,6 +2,8 @@ export interface User {
   id: string;
   email: string;
   plan: 'free' | 'pro';
+  onboarding_completed: boolean;
+  ai_collection_id: string | null;
   created_at: string;
 }
 
