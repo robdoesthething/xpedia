@@ -613,4 +613,29 @@ Return ONLY valid JSON: { "kta": [...], "new_voices": [...] }`,
     };
   },
 
+  /**
+   * Suggest 12-15 broad knowledge category names based on a sample of the user's tweets.
+   * Pro only — caller must enforce plan check before calling this.
+   */
+  async suggestCategories(sampleContent: string, userId?: string): Promise<string[]> {
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: `Based on these tweet samples, suggest 12-15 broad knowledge categories (2-4 words each) the user cares about.
+Each category should be broad enough to contain many tweets (e.g. "AI & Machine Learning", "Finance & Investing").
+Return ONLY a JSON array of strings.`,
+      },
+      { role: 'user', content: sampleContent },
+    ];
+
+    const result = await callWithRotation(CATEGORIZATION_PROVIDERS, messages, 300);
+    if (!result) return [];
+
+    logAiCall({ userId, provider: result.provider, operation: 'suggest_categories', tokensIn: result.tokensIn, tokensOut: result.tokensOut });
+
+    const parsed = parseAiJson<unknown[]>(result.content, 'suggest_categories');
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(String).filter(Boolean);
+  },
+
 };
