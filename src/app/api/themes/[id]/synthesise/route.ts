@@ -18,6 +18,17 @@ export async function POST(
 
   if (!validateOrigin(_request)) return csrfForbidden();
 
+  // Theme-level synthesis is Pro only
+  const { data: profile } = await auth.supabase
+    .from('profiles')
+    .select('plan')
+    .eq('id', user.id)
+    .single();
+
+  if (profile?.plan !== 'pro') {
+    return Response.json({ error: 'upgrade_required', reason: 'feature' }, { status: 403 });
+  }
+
   // 3 synthesis requests per minute per user
   const rl = checkRateLimit(`synthesise:${user.id}`, 3, 60_000);
   if (!rl.allowed) return rateLimitResponse(rl, 'Too many requests. Please wait before synthesising again.');

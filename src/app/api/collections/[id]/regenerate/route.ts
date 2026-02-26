@@ -37,6 +37,47 @@ export async function POST(
     return Response.json({ error: 'Collection not found' }, { status: 404 });
   }
 
+  // Free tier enforcement: 1 collection, ≤5 tweets
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('plan, ai_collection_id')
+    .eq('id', user.id)
+    .single();
+
+  const isFree = profile?.plan !== 'pro';
+
+  if (isFree) {
+    // If the user already has a different AI collection, block
+    if (profile?.ai_collection_id && profile.ai_collection_id !== id) {
+      return Response.json(
+        { error: 'upgrade_required', reason: 'ai_collection_limit' },
+        { status: 403 }
+      );
+    }
+
+    // Check tweet count in this collection
+    const { count } = await supabase
+      .from('tweets')
+      .select('id', { count: 'exact', head: true })
+      .eq('collection_id', id)
+      .eq('user_id', user.id);
+
+    if ((count ?? 0) > 5) {
+      return Response.json(
+        { error: 'upgrade_required', reason: 'tweet_count_limit' },
+        { status: 403 }
+      );
+    }
+
+    // First time — record this as the user's free AI slot
+    if (!profile?.ai_collection_id) {
+      await supabase
+        .from('profiles')
+        .update({ ai_collection_id: id })
+        .eq('id', user.id);
+    }
+  }
+
   await regenerateCollectionDocument(id, user.id);
 
   return Response.json({ success: true });
