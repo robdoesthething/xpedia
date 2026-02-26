@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ProLock from '@/components/ProLock';
 import type { Collection } from '@/types/database';
 
 interface InboxTweet {
@@ -16,9 +17,10 @@ interface InboxTweet {
 interface Props {
   tweets: InboxTweet[];
   collections: Collection[];
+  isPro: boolean;
 }
 
-export default function InboxClient({ tweets: initialTweets, collections }: Props) {
+export default function InboxClient({ tweets: initialTweets, collections, isPro }: Props) {
   const router = useRouter();
   const [tweets, setTweets] = useState(initialTweets);
   const [assigning, setAssigning] = useState<string | null>(null);
@@ -62,13 +64,15 @@ export default function InboxClient({ tweets: initialTweets, collections }: Prop
   return (
     <div>
       <div className="mb-6 flex items-center justify-end">
-        <button
-          onClick={handleSortAll}
-          disabled={sorting}
-          className="border border-gold/50 text-gold font-mono text-xs tracking-widest uppercase px-4 py-2 hover:bg-gold/10 transition-colors disabled:opacity-50"
-        >
-          {sorting ? 'Sorting...' : '✦ AI Sort All'}
-        </button>
+        <ProLock isPro={isPro} reason="feature">
+          <button
+            onClick={handleSortAll}
+            disabled={sorting}
+            className="border border-gold/50 text-gold font-mono text-xs tracking-widest uppercase px-4 py-2 hover:bg-gold/10 transition-colors disabled:opacity-50"
+          >
+            {sorting ? 'Sorting...' : '✦ AI Sort All'}
+          </button>
+        </ProLock>
       </div>
 
       <div className="space-y-2">

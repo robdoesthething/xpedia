@@ -3,6 +3,8 @@ import DashboardTabs from '@/components/DashboardTabs';
 import SearchBar from '@/components/SearchBar';
 import ThemeSidebar from '@/components/ThemeSidebar';
 import OnboardingGate from '@/components/onboarding/OnboardingGate';
+import UpgradeBanner from '@/components/UpgradeBanner';
+import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import type { Collection, Theme } from '@/types/database';
 
@@ -71,6 +73,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <main className="flex-1 min-w-0 px-6 py-8">{children}</main>
       </div>
       {showOnboarding && <OnboardingGate isPro={isPro} />}
+      <Suspense><UpgradeBanner /></Suspense>
     </div>
   );
 }

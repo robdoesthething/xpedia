@@ -5,6 +5,13 @@ import type { Collection } from '@/types/database';
 export default async function InboxPage() {
   const supabase = await createClient();
 
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = user
+    ? await supabase.from('profiles').select('plan').eq('id', user.id).single()
+    : { data: null };
+
+  const isPro = profile?.plan === 'pro';
+
   const [tweetsRes, collectionsRes] = await Promise.all([
     supabase
       .from('tweets')
@@ -33,7 +40,7 @@ export default async function InboxPage() {
           {tweets.length} uncategorized tweet{tweets.length !== 1 ? 's' : ''} — assign each to a collection or let AI sort them.
         </p>
       </div>
-      <InboxClient tweets={tweets} collections={collections} />
+      <InboxClient tweets={tweets} collections={collections} isPro={isPro} />
     </div>
   );
 }
