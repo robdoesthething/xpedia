@@ -12,9 +12,10 @@ interface ThemeWithCollections extends Theme {
 interface Props {
   themes: ThemeWithCollections[];
   uncategorized: Collection[];
+  uncategorizedTweetCount: number;
 }
 
-export default function ThemeSidebar({ themes, uncategorized }: Props) {
+export default function ThemeSidebar({ themes, uncategorized, uncategorizedTweetCount }: Props) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState<Set<string>>(() => {
     // Pre-expand the theme that contains the active collection
@@ -110,7 +111,26 @@ export default function ThemeSidebar({ themes, uncategorized }: Props) {
         </div>
       )}
 
-      {themes.length === 0 && uncategorized.length === 0 && (
+      {/* Uncategorized tweet inbox — pinned at the bottom */}
+      {uncategorizedTweetCount > 0 && (
+        <div className="mt-4 border-t border-seam pt-4">
+          <Link
+            href="/dashboard/inbox"
+            className={`flex items-center justify-between px-2 py-1.5 font-mono text-xs tracking-widest uppercase transition-colors ${
+              pathname === '/dashboard/inbox'
+                ? 'text-gold'
+                : 'text-shadow hover:text-parchment'
+            }`}
+          >
+            <span>Inbox</span>
+            <span className="ml-2 rounded-full bg-seam px-1.5 py-0.5 text-mist normal-case tracking-normal">
+              {uncategorizedTweetCount}
+            </span>
+          </Link>
+        </div>
+      )}
+
+      {themes.length === 0 && uncategorized.length === 0 && uncategorizedTweetCount === 0 && (
         <p className="px-2 font-mono text-xs text-shadow">No collections yet.</p>
       )}
     </aside>

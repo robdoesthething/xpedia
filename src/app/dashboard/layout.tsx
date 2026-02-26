@@ -53,6 +53,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     a.name.localeCompare(b.name)
   );
 
+  // Count uncategorized tweets (tweets with no collection_id)
+  const { count: uncategorizedTweetCount } = await supabase
+    .from('tweets')
+    .select('id', { count: 'exact', head: true })
+    .is('collection_id', null);
+
   return (
     <div className="min-h-screen bg-void">
       <Navbar />
@@ -61,7 +67,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <SearchBar />
       </div>
       <div className="flex">
-        <ThemeSidebar themes={themes} uncategorized={uncategorized} />
+        <ThemeSidebar themes={themes} uncategorized={uncategorized} uncategorizedTweetCount={uncategorizedTweetCount ?? 0} />
         <main className="flex-1 min-w-0 px-6 py-8">{children}</main>
       </div>
       {showOnboarding && <OnboardingGate isPro={isPro} />}
