@@ -67,6 +67,7 @@ export async function PATCH(
 /**
  * DELETE /api/collections/[id] — Delete a collection.
  * Tweets in this collection become uncategorized (DB ON DELETE SET NULL).
+ * Also clears ai_collection_id on the user's profile if this was their free AI slot.
  */
 export async function DELETE(
   _request: NextRequest,
@@ -78,6 +79,13 @@ export async function DELETE(
   const { user, supabase } = auth;
 
   if (!validateOrigin(_request)) return csrfForbidden();
+
+  // Clear free AI slot if this collection was it
+  await supabase
+    .from('profiles')
+    .update({ ai_collection_id: null })
+    .eq('ai_collection_id', id)
+    .eq('id', user.id);
 
   const { error } = await supabase
     .from('collections')
