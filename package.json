@@ -10,6 +10,9 @@
     "type-check": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "build:extension": "node scripts/generate-extension-config.js && npx esbuild src/chrome-extension/content.ts --bundle --outfile=dist/chrome-extension/content.js --platform=browser --target=chrome120 && npx esbuild src/chrome-extension/background.ts --bundle --outfile=dist/chrome-extension/background.js --platform=browser --target=chrome120 --format=iife && npx esbuild src/chrome-extension/popup.ts --bundle --outfile=dist/chrome-extension/popup.js --platform=browser --target=chrome120 --format=iife && cp src/chrome-extension/manifest.json src/chrome-extension/popup.html dist/chrome-extension/"
   },
   "dependencies": {
@@ -25,12 +28,14 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.0.18",
     "esbuild": "^0.27.3",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.8.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

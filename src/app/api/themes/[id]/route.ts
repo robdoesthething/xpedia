@@ -82,10 +82,13 @@ export async function PATCH(
 
 /**
  * DELETE /api/themes/[id] — Delete a theme.
- * Collections become uncategorized (theme_id SET NULL via DB).
+ * Query params:
+ *   orphan_action: 'uncategorize' | 'delete_collections'
+ *     uncategorize   — keep collections but remove their theme (default DB behaviour)
+ *     delete_collections — delete all collections in this theme (tweets → uncategorized)
  */
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
@@ -93,7 +96,64 @@ export async function DELETE(
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
   const { user, supabase } = auth;
 
-  if (!validateOrigin(_request)) return csrfForbidden();
+  if (!validateOrigin(request)) return csrfForbidden();
+
+  const url = new URL(request.url);
+  const orphanAction = url.searchParams.get('orphan_action');
+
+  if (orphanAction !== 'uncategorize' && orphanAction !== 'delete_collections') {
+    return Response.json(
+      { error: 'orphan_action must be "uncategorize" or "delete_collections"' },
+      { status: 400 }
+    );
+  }
+
+  // Verify theme belongs to user
+  const { data: theme, error: fetchError } = await supabase
+    .from('themes')
+    .select('id')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (fetchError || !theme) {
+    return Response.json({ error: 'Theme not found' }, { status: 404 });
+  }
+
+  if (orphanAction === 'delete_collections') {
+    // Fetch all collections in this theme
+    const { data: collections } = await supabase
+      .from('collections')
+      .select('id')
+      .eq('theme_id', id)
+      .eq('user_id', user.id);
+
+    if (collections && collections.length > 0) {
+      const ids = collections.map((c) => c.id);
+
+      // Uncategorize tweets in those collections
+      await supabase
+        .from('tweets')
+        .update({ collection_id: null })
+        .in('collection_id', ids)
+        .eq('user_id', user.id);
+
+      // Clear free AI slot if one of these collections was it
+      await supabase
+        .from('profiles')
+        .update({ ai_collection_id: null })
+        .in('ai_collection_id', ids)
+        .eq('id', user.id);
+
+      // Delete the collections
+      await supabase
+        .from('collections')
+        .delete()
+        .in('id', ids)
+        .eq('user_id', user.id);
+    }
+  }
+  // For 'uncategorize', the DB FK (ON DELETE SET NULL) handles it automatically.
 
   const { error } = await supabase
     .from('themes').delete().eq('id', id).eq('user_id', user.id);
