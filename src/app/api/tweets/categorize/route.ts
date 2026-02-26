@@ -72,6 +72,15 @@ async function categorizeTweets(
   try {
     const supabase = createServiceClient();
 
+    // Fetch user's themes so AI classifies into the user's taxonomy
+    const { data: themes } = await supabase
+      .from('themes')
+      .select('name')
+      .eq('user_id', userId)
+      .order('name');
+
+    const userThemeNames = (themes ?? []).map((t: { name: string }) => t.name);
+
     // Fetch existing collections
     const { data: collections } = await supabase
       .from('collections')
@@ -101,9 +110,15 @@ async function categorizeTweets(
           }
         }
 
-        const result = await aiRouter.categorize(tweet, collectionNames, userId);
+        const result = await aiRouter.categorize(tweet, collectionNames, userId, userThemeNames);
         if (!result) {
           errors++;
+          continue;
+        }
+
+        // AI signalled no good match — leave tweet uncategorized
+        if (result.theme_name === '__uncategorized__') {
+          console.log(`[AI] Tweet ${tweet.id} → uncategorized (no matching theme)`);
           continue;
         }
 

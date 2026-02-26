@@ -198,19 +198,19 @@ export const aiRouter = {
     userId?: string,
     existingThemeNames: string[] = []
   ): Promise<CategorizationResult | null> {
-    const themesContext =
+    const themeInstruction =
       existingThemeNames.length > 0
-        ? `Existing themes: ${existingThemeNames.join(', ')}`
-        : 'No existing themes yet.';
+        ? `THEME: You MUST assign exactly one of these themes: ${existingThemeNames.join(', ')}. Do NOT invent a new theme. If the content does not clearly fit any theme, use "__uncategorized__".`
+        : 'THEME: 2-4 words, broad (e.g. "AI & Machine Learning", "Finance & Investing").';
 
     const collectionsContext =
       existingCollectionNames.length > 0
-        ? `Existing collections: ${existingCollectionNames.join(', ')}`
+        ? `Existing collections (reuse if it fits): ${existingCollectionNames.join(', ')}`
         : 'No existing collections yet.';
 
     const systemPrompt = `You categorize tweets into collections under themes, and write a one-line actionable summary.
 
-THEME: 2-4 words, broad. Reuse from existing list if possible.
+${themeInstruction}
 COLLECTION: 2-5 words, title-cased, a studyable skill area. Reuse existing if it fits. Never vague ("Tech", "Business").
 
 SUMMARY — the most important field:
@@ -219,7 +219,6 @@ SUMMARY — the most important field:
 - Copy ALL quantitative data verbatim: percentages (40%, 5x), dollar amounts ($38K), durations (2 hours, 7 days), counts (12 slides, 200 components), scores (8.2/10), and pixel/unit values (400px, 12KB).
 - If the tweet has no specific technique or numbers, summarize the key mindset shift in one concrete sentence.
 
-${themesContext}
 ${collectionsContext}
 
 Respond with ONLY valid JSON: {"theme_name": "...", "collection_name": "...", "summary": "..."}`;
@@ -347,10 +346,10 @@ Concrete methods, step-by-step processes, named frameworks. Quote verbatim when 
 All quantitative data: percentages, dollar amounts, durations, counts, scores. Present as a bullet list.
 
 ### Tools & Resources
-Specific tools, libraries, APIs, or resources mentioned with what they do.
+Specific tools, libraries, APIs, or resources mentioned with what they do. DO NOT append generic descriptions like "for coding" if not explicitly detailed in the tweets.
 
 ### Open Questions & Gaps
-What the collection does NOT cover that a practitioner would need.
+What the collection does NOT cover that a practitioner would need. ONLY list gaps that are glaringly obvious from the context. DO NOT invent generic questions like "How to integrate X with Y". If no obvious gaps exist, skip this section.
 
 ABSOLUTE RULES:
 - NEVER use hedging language: "appears to", "could imply", "it's unclear", "seems to suggest". State facts or omit.
@@ -391,7 +390,7 @@ ABSOLUTE RULES:
         role: 'system',
         content: `You extract actionable takeaways from curated tweets about "${collectionName}". Output is reference material for LLMs — every takeaway must contain enough substance to act on WITHOUT reading the original tweets.
 
-CRITICAL: Only produce a takeaway when a tweet contains a SPECIFIC technique, prompt, workflow, comparison, or configuration. Produce 2-7 takeaways — fewer is better than padding with generic advice.
+CRITICAL: Only produce a takeaway when a tweet contains a SPECIFIC technique, prompt, workflow, comparison, or configuration. Produce 2-7 takeaways — fewer is better than padding with generic advice. DO NOT force conclusions if tweets lack substance.
 
 SKIP these entirely (do not create a takeaway):
 - Tweets that just mention a tool name without explaining what it does or how to use it
@@ -401,17 +400,19 @@ SKIP these entirely (do not create a takeaway):
 - Spam and self-promotion
 
 FOR EACH TAKEAWAY:
-- If a tweet shares a specific prompt, quote it verbatim
-- If a tweet compares tools, state the specific comparison (which tool is better at what)
-- If a tweet describes a workflow, list the actual steps
-- If a tweet shares a technique, explain the technique in enough detail to replicate it
-- Start with an imperative verb. Write 2-3 sentences.
+- Be EXTREMELY concise. Provide the raw instruction or insight without introductory fluff. 1-2 sentences maximum.
+- Start with an imperative verb (e.g., "Install", "Configure", "Use").
+- DO NOT use filler phrases like "This allows for...", "This highlights the value...", "Consider using...", "leverage its capabilities" or "to enhance...". 
+- If a tweet shares a specific prompt, quote it verbatim.
+- If a tweet compares tools, state the specific comparison (which tool is better at what).
+- If a tweet describes a workflow, list the exact steps concisely.
 
-ANTI-HALLUCINATION:
-- NEVER invent steps, frameworks, or processes not explicitly in the tweets
-- NEVER attach percentages, dollar amounts, or outcome predictions
-- NEVER reference @handles or authors
+ANTI-HALLUCINATION & ANTI-FLUFF:
+- NEVER invent steps, frameworks, gaps, or processes not explicitly in the tweets.
+- NEVER attach percentages, dollar amounts, or outcome predictions.
+- NEVER reference @handles or authors.
 - If only 1-2 tweets have real substance, produce only 1-2 takeaways. Do NOT pad.
+- Omit any "why" explanations unless the tweet itself provided a specific, technical reason.
 
 Return ONLY a JSON array of strings.`,
       },
