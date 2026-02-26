@@ -31,6 +31,7 @@ describe('POST /api/corpus/reset', () => {
     vi.mocked(requireUser).mockResolvedValue({
       user: { id: 'user-1' },
       supabase: { from: vi.fn(() => mockChain) },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     const { POST } = await import('../reset/route');

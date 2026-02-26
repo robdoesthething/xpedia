@@ -31,6 +31,7 @@ describe('DELETE /api/themes/[id]', () => {
     vi.mocked(requireUser).mockResolvedValue({
       user: { id: 'user-1' },
       supabase: { from: vi.fn() },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     const { DELETE } = await import('../[id]/route');
@@ -55,6 +56,7 @@ describe('DELETE /api/themes/[id]', () => {
           })),
         })),
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     const { DELETE } = await import('../[id]/route');

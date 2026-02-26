@@ -34,7 +34,7 @@ export default function OnboardingModal({ isPro, onComplete }: Props) {
     } finally {
       setTaxonomyLoading(false);
     }
-    isPro ? handleComplete() : setStep(4);
+    if (isPro) { handleComplete(); } else { setStep(4); }
   }
 
   async function handleComplete() {

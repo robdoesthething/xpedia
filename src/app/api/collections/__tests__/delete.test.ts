@@ -43,6 +43,7 @@ describe('DELETE /api/collections/[id]', () => {
           delete: mockDelete,
         })),
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     const { DELETE } = await import('../[id]/route');

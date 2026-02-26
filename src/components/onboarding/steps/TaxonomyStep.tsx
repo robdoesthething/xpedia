@@ -32,7 +32,7 @@ export default function TaxonomyStep({ isPro, onConfirm, loading = false }: Prop
   function toggle(chip: string) {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(chip) ? next.delete(chip) : next.add(chip);
+      if (next.has(chip)) { next.delete(chip); } else { next.add(chip); }
       return next;
     });
   }

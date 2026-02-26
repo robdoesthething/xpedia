@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireUser } from '@/lib/supabase/server';
 import { validateOrigin, csrfForbidden } from '@/lib/csrf';
-import { stripe, PRO_PRICE_ID } from '@/lib/stripe';
+import { getStripe, PRO_PRICE_ID } from '@/lib/stripe';
 
 /**
  * POST /api/stripe/checkout
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
   const origin = new URL(request.url).origin;
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripe().checkout.sessions.create({
     mode: 'payment',
     line_items: [{ price: PRO_PRICE_ID, quantity: 1 }],
     success_url: `${origin}/dashboard?upgraded=true`,

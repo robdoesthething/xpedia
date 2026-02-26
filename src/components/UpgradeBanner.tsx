@@ -11,17 +11,16 @@ export default function UpgradeBanner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [visible, setVisible] = useState(false);
+  // Initialise from search params so first render is correct (avoids setState-in-effect)
+  const [visible, setVisible] = useState(() => searchParams.get('upgraded') === 'true');
 
   useEffect(() => {
-    if (searchParams.get('upgraded') === 'true') {
-      setVisible(true);
-      // Clean the query param from the URL without a hard reload
-      router.replace(pathname, { scroll: false });
-      const t = setTimeout(() => setVisible(false), 6000);
-      return () => clearTimeout(t);
-    }
-  }, [searchParams, router, pathname]);
+    if (!visible) return;
+    // Clean the query param from the URL without a hard reload
+    router.replace(pathname, { scroll: false });
+    const t = setTimeout(() => setVisible(false), 6000);
+    return () => clearTimeout(t);
+  }, [visible, router, pathname]);
 
   if (!visible) return null;
 

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
-import { stripe } from '@/lib/stripe';
+import Stripe from 'stripe';
+import { getStripe } from '@/lib/stripe';
 import { createServiceClient } from '@/lib/supabase/service';
 
 /**
@@ -12,9 +13,9 @@ export async function POST(request: NextRequest) {
   const sig = request.headers.get('stripe-signature');
   const body = await request.text();
 
-  let event: ReturnType<typeof stripe.webhooks.constructEvent>;
+  let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       body,
       sig!,
       process.env.STRIPE_WEBHOOK_SECRET!
