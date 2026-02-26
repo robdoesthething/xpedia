@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +22,12 @@ export default function Navbar() {
       <span className="font-mono text-sm tracking-widest text-gold uppercase">Xpedia</span>
       <div className="flex items-center gap-5">
         {user && <span className="font-mono text-xs text-shadow">{user.email}</span>}
+        <Link
+          href="/dashboard/settings"
+          className="font-mono text-xs tracking-widest text-mist uppercase hover:text-parchment transition-colors"
+        >
+          Settings
+        </Link>
         <ThemeToggle />
         <button
           onClick={handleSignOut}

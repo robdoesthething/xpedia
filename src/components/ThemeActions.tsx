@@ -19,6 +19,7 @@ export default function ThemeActions({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [orphanAction, setOrphanAction] = useState<'uncategorize' | 'delete_collections'>('uncategorize');
 
   async function handleRename() {
     setSaving(true);
@@ -41,7 +42,7 @@ export default function ThemeActions({
   async function handleDelete() {
     setDeleting(true);
     setDeleteError(null);
-    const res = await fetch(`/api/themes/${themeId}`, { method: 'DELETE' });
+    const res = await fetch(`/api/themes/${themeId}?orphan_action=${orphanAction}`, { method: 'DELETE' });
     setDeleting(false);
     if (res.ok) {
       router.push('/dashboard');
@@ -83,13 +84,31 @@ export default function ThemeActions({
 
   if (confirmDelete) {
     return (
-      <ConfirmDeleteBar
-        message="Delete theme? Collections become uncategorized."
-        onConfirm={handleDelete}
-        onCancel={() => { setConfirmDelete(false); setDeleteError(null); }}
-        loading={deleting}
-        error={deleteError}
-      />
+      <div className="flex flex-col items-end gap-2">
+        <p className="font-mono text-xs text-mist">What should happen to this theme&apos;s collections?</p>
+        <div className="flex gap-3">
+          {(['uncategorize', 'delete_collections'] as const).map((action) => (
+            <label key={action} className="flex items-center gap-1.5 cursor-pointer font-mono text-xs text-mist">
+              <input
+                type="radio"
+                name={`orphan-${themeId}`}
+                value={action}
+                checked={orphanAction === action}
+                onChange={() => setOrphanAction(action)}
+                className="accent-gold"
+              />
+              {action === 'uncategorize' ? 'Keep (unthemed)' : 'Delete collections'}
+            </label>
+          ))}
+        </div>
+        <ConfirmDeleteBar
+          message="This cannot be undone."
+          onConfirm={handleDelete}
+          onCancel={() => { setConfirmDelete(false); setDeleteError(null); }}
+          loading={deleting}
+          error={deleteError}
+        />
+      </div>
     );
   }
 
