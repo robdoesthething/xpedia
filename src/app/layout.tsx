@@ -1,13 +1,12 @@
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, DM_Sans, JetBrains_Mono } from 'next/font/google';
+import { Syne, DM_Sans, JetBrains_Mono } from 'next/font/google';
 import ThemeProvider from '@/components/ThemeProvider';
 import './globals.css';
 
-const cormorant = Cormorant_Garamond({
-  variable: '--font-cormorant',
+const syne = Syne({
+  variable: '--font-syne',
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  style: ['normal', 'italic'],
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
 });
 
@@ -36,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
       <body className="antialiased">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
