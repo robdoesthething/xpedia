@@ -21,7 +21,7 @@ export default async function LandingPage() {
           <ThemeToggle />
           <Link
             href={ctaHref}
-            className="btn-shimmer inline-flex items-center gap-1.5 text-white font-sans text-sm font-semibold px-4 py-2 rounded-lg"
+            className="btn-shimmer inline-flex items-center gap-1.5 text-white font-sans text-sm font-semibold px-4 py-2 rounded-xl"
           >
             {ctaLabel} →
           </Link>
@@ -35,9 +35,9 @@ export default async function LandingPage() {
           className="pointer-events-none absolute inset-0"
           style={{
             background: [
-              'radial-gradient(ellipse 800px 500px at 90% -10%, rgba(91,95,250,0.25) 0%, transparent 65%)',
-              'radial-gradient(ellipse 600px 600px at -10% 115%, rgba(124,58,237,0.18) 0%, transparent 65%)',
-              'radial-gradient(ellipse 400px 300px at 60% 100%, rgba(255,110,74,0.12) 0%, transparent 60%)',
+              'radial-gradient(ellipse 800px 500px at 90% -10%, rgba(124,58,237,0.30) 0%, transparent 65%)',
+              'radial-gradient(ellipse 600px 600px at -10% 115%, rgba(192,38,211,0.22) 0%, transparent 65%)',
+              'radial-gradient(ellipse 400px 300px at 60% 100%, rgba(249,115,22,0.18) 0%, transparent 60%)',
             ].join(', '),
           }}
         />
@@ -67,7 +67,7 @@ export default async function LandingPage() {
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link
               href={ctaHref}
-              className="btn-shimmer inline-flex items-center gap-2 text-white font-sans text-sm font-semibold px-6 py-3 rounded-lg"
+              className="btn-shimmer inline-flex items-center gap-2 text-white font-sans text-sm font-semibold px-6 py-3 rounded-xl"
             >
               {ctaLabel} <span>→</span>
             </Link>
@@ -181,19 +181,19 @@ export default async function LandingPage() {
                 icon: '⚡',
                 title: 'Zero-API capture',
                 desc: 'Chrome extension reads your X bookmarks directly — no API key, no limitations, no waitlist.',
-                iconStyle: { background: 'linear-gradient(135deg, #FF6E4A, #FF9D7E)' },
+                iconStyle: { background: 'linear-gradient(135deg, #F97316, #FB923C)' },
               },
               {
                 icon: '🧠',
                 title: 'AI categorization',
                 desc: 'Not "Tech" — "React Performance Patterns." Granular, specific topics that actually help you think.',
-                iconStyle: { background: 'linear-gradient(135deg, #5B5FFA, #818CF8)' },
+                iconStyle: { background: 'linear-gradient(135deg, #7C3AED, #A855F7)' },
               },
               {
                 icon: '📄',
                 title: 'LLM-ready export',
                 desc: 'Each collection becomes a structured Markdown document you can drop straight into any AI chat.',
-                iconStyle: { background: 'linear-gradient(135deg, #7C3AED, #A78BFA)' },
+                iconStyle: { background: 'linear-gradient(135deg, #C026D3, #D946EF)' },
               },
             ].map(({ icon, title, desc, iconStyle }) => (
               <div key={title} className="card bg-ink border border-seam p-6">
@@ -269,7 +269,7 @@ export default async function LandingPage() {
               </ul>
               <Link
                 href={ctaHref}
-                className="block text-center border border-seam text-parchment text-sm font-medium py-3 rounded-lg hover:bg-quill transition-colors"
+                className="block text-center border border-seam text-parchment text-sm font-medium py-3 rounded-xl hover:bg-quill transition-colors"
               >
                 Get started free
               </Link>
@@ -299,7 +299,7 @@ export default async function LandingPage() {
               </ul>
               <Link
                 href={ctaHref}
-                className="block text-center bg-coral text-white text-sm font-semibold py-3 rounded-lg hover:bg-coral-bright transition-colors"
+                className="block text-center bg-coral text-white text-sm font-semibold py-3 rounded-xl hover:bg-coral-bright transition-colors"
               >
                 Get Pro — $29
               </Link>
@@ -318,7 +318,7 @@ export default async function LandingPage() {
         </p>
         <Link
           href={ctaHref}
-          className="btn-shimmer inline-flex items-center gap-2 text-white font-sans text-sm font-semibold px-8 py-4 rounded-lg"
+          className="btn-shimmer inline-flex items-center gap-2 text-white font-sans text-sm font-semibold px-8 py-4 rounded-xl"
         >
           {ctaLabel}{!user && ' — free forever'} →
         </Link>

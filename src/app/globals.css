@@ -2,7 +2,7 @@
 
 @theme inline {
   /* Typography */
-  --font-serif:  var(--font-syne), Georgia, serif;
+  --font-serif:  var(--font-bricolage), Georgia, serif;
   --font-sans:   var(--font-dm-sans), system-ui, sans-serif;
   --font-mono:   var(--font-jetbrains), 'Courier New', monospace;
 
@@ -23,40 +23,40 @@
 
 /* ── Light mode (default) ── */
 :root {
-  --app-void:         #FAFAF8;   /* indigo-tinted cream bg        */
+  --app-void:         #F9F9FC;   /* clean cool-white bg           */
   --app-ink:          #FFFFFF;   /* white card surface            */
-  --app-quill:        #F4F4FD;   /* indigo-tinted hover           */
-  --app-seam:         #E2E2F0;   /* indigo-tinted border          */
-  --app-veil:         #D0D0E8;   /* stronger border               */
+  --app-quill:        #F2F2FA;   /* violet-tinted hover           */
+  --app-seam:         #E4E4F2;   /* violet-tinted border          */
+  --app-veil:         #CACADE;   /* stronger border               */
 
-  --app-parchment:    #0D0E1A;   /* near-black primary text       */
-  --app-mist:         #6B6B8A;   /* secondary text                */
-  --app-shadow:       #9B9BB0;   /* muted text                    */
+  --app-parchment:    #0F0F1C;   /* near-black primary text       */
+  --app-mist:         #60607C;   /* secondary text                */
+  --app-shadow:       #94949E;   /* muted text                    */
 
-  --app-gold:         #5B5FFA;   /* indigo accent                 */
-  --app-gold-bright:  #4A4EF0;   /* indigo hover                  */
+  --app-gold:         #7C3AED;   /* vivid violet accent           */
+  --app-gold-bright:  #6D28D9;   /* violet hover                  */
 
-  --app-coral:        #FF6E4A;   /* coral CTA                     */
-  --app-coral-bright: #F05A38;   /* coral hover                   */
+  --app-coral:        #F97316;   /* vivid orange CTA              */
+  --app-coral-bright: #EA580C;   /* orange hover                  */
 }
 
 /* ── Dark mode ── */
 .dark {
-  --app-void:         #0D0E1A;   /* deep indigo-black bg          */
-  --app-ink:          #161726;   /* dark card surface             */
-  --app-quill:        #1E1F33;   /* hovered card                  */
-  --app-seam:         #2A2B45;   /* visible border                */
-  --app-veil:         #363758;   /* strong border                 */
+  --app-void:         #0D0D14;   /* near-black bg                 */
+  --app-ink:          #141420;   /* dark card surface             */
+  --app-quill:        #1C1C2C;   /* hovered card                  */
+  --app-seam:         #28283E;   /* visible border                */
+  --app-veil:         #383852;   /* strong border                 */
 
-  --app-parchment:    #F0F0FF;   /* bright readable primary       */
-  --app-mist:         #9494B8;   /* secondary                     */
-  --app-shadow:       #5A5A7A;   /* muted                         */
+  --app-parchment:    #F5F5FF;   /* bright readable primary       */
+  --app-mist:         #9090B0;   /* secondary                     */
+  --app-shadow:       #5C5C7A;   /* muted                         */
 
-  --app-gold:         #5B5FFA;   /* same indigo in dark           */
-  --app-gold-bright:  #6A6EFF;   /* lighter indigo hover          */
+  --app-gold:         #9333EA;   /* vivid violet in dark          */
+  --app-gold-bright:  #A855F7;   /* lighter violet hover          */
 
-  --app-coral:        #FF7A5A;   /* slightly lighter coral        */
-  --app-coral-bright: #FF8C6A;   /* coral hover                   */
+  --app-coral:        #FB923C;   /* vivid orange in dark          */
+  --app-coral-bright: #F97316;   /* orange hover                  */
 }
 
 *, *::before, *::after {
@@ -97,7 +97,7 @@ body {
 
 /* Gradient text utility */
 .gradient-text {
-  background: linear-gradient(135deg, #5B5FFA 0%, #a855f7 50%, #FF6E4A 100%);
+  background: linear-gradient(135deg, #7C3AED 0%, #C026D3 50%, #F97316 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -112,19 +112,20 @@ body {
 .btn-shimmer {
   background: linear-gradient(
     110deg,
-    #FF6E4A 0%,
-    #FF6E4A 35%,
-    #ffb399 50%,
-    #FF6E4A 65%,
-    #FF6E4A 100%
+    #F97316 0%,
+    #F97316 35%,
+    #FED7AA 50%,
+    #F97316 65%,
+    #F97316 100%
   );
   background-size: 250% auto;
+  border-radius: 12px;
   transition: background-position 0.5s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .btn-shimmer:hover {
   background-position: right center;
-  box-shadow: 0 4px 24px rgba(255, 110, 74, 0.50), 0 1px 6px rgba(255, 110, 74, 0.30);
+  box-shadow: 0 4px 24px rgba(249, 115, 22, 0.55), 0 1px 6px rgba(249, 115, 22, 0.35);
   transform: translateY(-1px);
 }
 
@@ -134,12 +135,13 @@ body {
 
 /* Card shadow + hover lift utility */
 .card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 20px rgba(91, 95, 250, 0.05);
-  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 20px rgba(124, 58, 237, 0.06);
+  border-radius: 18px;
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
 
 .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09), 0 16px 48px rgba(91, 95, 250, 0.20);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09), 0 16px 48px rgba(124, 58, 237, 0.18);
 }
+
