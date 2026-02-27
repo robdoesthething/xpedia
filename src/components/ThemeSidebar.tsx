@@ -18,7 +18,6 @@ interface Props {
 export default function ThemeSidebar({ themes, uncategorized, uncategorizedTweetCount }: Props) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState<Set<string>>(() => {
-    // Pre-expand the theme that contains the active collection
     const activeId = pathname.match(/\/dashboard\/collection\/([^/]+)/)?.[1];
     const initial = new Set<string>();
     if (activeId) {
@@ -69,9 +68,9 @@ export default function ThemeSidebar({ themes, uncategorized, uncategorizedTweet
                     <Link
                       key={col.id}
                       href={`/dashboard/collection/${col.id}`}
-                      className={`block truncate px-2 py-1 text-xs transition-colors ${
+                      className={`block truncate px-2 py-1 text-xs transition-colors rounded ${
                         isActive
-                          ? 'text-gold font-medium'
+                          ? 'text-gold font-medium bg-gold/10'
                           : 'text-shadow hover:text-parchment'
                       }`}
                     >
@@ -97,9 +96,9 @@ export default function ThemeSidebar({ themes, uncategorized, uncategorizedTweet
                 <Link
                   key={col.id}
                   href={`/dashboard/collection/${col.id}`}
-                  className={`block truncate px-2 py-1 text-xs transition-colors ${
+                  className={`block truncate px-2 py-1 text-xs transition-colors rounded ${
                     isActive
-                      ? 'text-gold font-medium'
+                      ? 'text-gold font-medium bg-gold/10'
                       : 'text-shadow hover:text-parchment'
                   }`}
                 >
@@ -111,19 +110,19 @@ export default function ThemeSidebar({ themes, uncategorized, uncategorizedTweet
         </div>
       )}
 
-      {/* Uncategorized tweet inbox — pinned at the bottom */}
+      {/* Uncategorized tweet inbox */}
       {uncategorizedTweetCount > 0 && (
         <div className="mt-4 border-t border-seam pt-4">
           <Link
             href="/dashboard/inbox"
-            className={`flex items-center justify-between px-2 py-1.5 font-mono text-xs tracking-widest uppercase transition-colors ${
+            className={`flex items-center justify-between px-2 py-1.5 font-mono text-xs tracking-widest uppercase transition-colors rounded ${
               pathname === '/dashboard/inbox'
-                ? 'text-gold'
+                ? 'text-gold bg-gold/10'
                 : 'text-shadow hover:text-parchment'
             }`}
           >
             <span>Inbox</span>
-            <span className="ml-2 rounded-full bg-seam px-1.5 py-0.5 text-mist normal-case tracking-normal">
+            <span className="ml-2 rounded-full bg-coral/15 text-coral px-1.5 py-0.5 normal-case tracking-normal">
               {uncategorizedTweetCount}
             </span>
           </Link>
