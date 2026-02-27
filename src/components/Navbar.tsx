@@ -19,7 +19,7 @@ export default function Navbar() {
 
   return (
     <nav className="flex items-center justify-between border-b border-seam bg-ink px-6 py-4">
-      <span className="font-mono text-sm tracking-widest text-gold uppercase">Xpedia</span>
+      <span className="font-serif font-bold text-lg text-parchment">Xpedia</span>
       <div className="flex items-center gap-5">
         {user && <span className="font-mono text-xs text-shadow">{user.email}</span>}
         <Link
