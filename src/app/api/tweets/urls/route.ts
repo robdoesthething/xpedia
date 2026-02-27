@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase
     .from('tweets')
     .select('tweet_url')
-    .eq('user_id', user.id);
+    .eq('user_id', user.id)
+    .limit(5000);
 
   if (error) {
     console.error('[Capture] Failed to fetch saved URLs:', error.message);

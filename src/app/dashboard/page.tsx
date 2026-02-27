@@ -3,6 +3,7 @@ import CollectionCard from '@/components/CollectionCard';
 import NewCollectionButton from '@/components/NewCollectionButton';
 import AssignThemesButton from '@/components/AssignThemesButton';
 import type { Collection, Theme } from '@/types/database';
+import { groupCollectionsByTheme } from '@/lib/utils';
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -36,23 +37,10 @@ export default async function DashboardPage() {
   }
 
   // Group by theme
-  const themeMap = new Map<string, { theme: Theme; collections: Collection[] }>();
-  const uncategorized: Collection[] = [];
-
-  for (const col of allCollections) {
-    const theme = (col as Collection & { themes: Theme | null }).themes;
-    if (theme && col.theme_id) {
-      if (!themeMap.has(theme.id)) {
-        themeMap.set(theme.id, { theme, collections: [] });
-      }
-      themeMap.get(theme.id)!.collections.push(col);
-    } else {
-      uncategorized.push(col);
-    }
-  }
+  const { themeMap, uncategorized } = groupCollectionsByTheme(allCollections);
 
   const groups = Array.from(themeMap.values()).sort((a, b) =>
-    a.theme.name.localeCompare(b.theme.name)
+    a.name.localeCompare(b.name)
   );
 
   return (
@@ -62,13 +50,13 @@ export default async function DashboardPage() {
         <NewCollectionButton />
       </div>
 
-      {groups.map(({ theme, collections }) => (
-        <section key={theme.id} className="mb-10">
+      {groups.map((group) => (
+        <section key={group.id} className="mb-10">
           <h3 className="mb-4 font-mono text-xs tracking-widest text-mist uppercase border-b border-seam pb-2">
-            {theme.name}
+            {group.name}
           </h3>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {collections.map((col) => (
+            {group.collections.map((col) => (
               <CollectionCard key={col.id} collection={col} />
             ))}
           </div>

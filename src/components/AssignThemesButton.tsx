@@ -10,9 +10,7 @@ export default function AssignThemesButton({ count }: { count: number }) {
   async function handleClick() {
     setLoading(true);
     try {
-      const res = await fetch('/api/collections/assign-themes', { method: 'POST' });
-      const data = await res.json();
-      console.log(`[Themes] Assigned ${data.assigned} collections to themes`);
+      await fetch('/api/collections/assign-themes', { method: 'POST' });
       router.refresh();
     } catch (err) {
       console.error('[Themes] Failed to assign themes:', err);

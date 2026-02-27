@@ -3,11 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { Collection, Theme } from '@/types/database';
-
-interface ThemeWithCollections extends Theme {
-  collections: Collection[];
-}
+import type { Collection, ThemeWithCollections } from '@/types/database';
 
 interface Props {
   themes: ThemeWithCollections[];

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import type { requireUser } from '@/lib/supabase/server';
 
 vi.mock('@/lib/supabase/server', () => ({
   requireUser: vi.fn(),
@@ -31,8 +32,7 @@ describe('DELETE /api/themes/[id]', () => {
     vi.mocked(requireUser).mockResolvedValue({
       user: { id: 'user-1' },
       supabase: { from: vi.fn() },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof requireUser>>);
 
     const { DELETE } = await import('../[id]/route');
     const req = new NextRequest('http://localhost/api/themes/123?orphan_action=invalid');
@@ -56,8 +56,7 @@ describe('DELETE /api/themes/[id]', () => {
           })),
         })),
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof requireUser>>);
 
     const { DELETE } = await import('../[id]/route');
     const req = new NextRequest('http://localhost/api/themes/123?orphan_action=uncategorize');

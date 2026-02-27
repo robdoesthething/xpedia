@@ -1,10 +1,9 @@
 import { requireUser } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/service';
-import { aiRouter } from '@/lib/ai-router';
 import { regenerateCollectionDocument } from '@/lib/regenerate-collection';
 import { checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { validateOrigin, csrfForbidden } from '@/lib/csrf';
-import { scrapeArticleBody } from '@/lib/article-scraper';
+import { categorizeTweetBatch } from '@/lib/categorize-tweets';
 
 export const maxDuration = 60;
 
@@ -16,7 +15,7 @@ export const maxDuration = 60;
 export async function POST(request: Request) {
   const auth = await requireUser();
   if (!auth) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  const { user, supabase } = auth;
+  const { user } = auth;
 
   if (!validateOrigin(request)) return csrfForbidden();
 
@@ -24,10 +23,13 @@ export async function POST(request: Request) {
   const rl = checkRateLimit(`categorize:${user.id}`, 3, 60_000);
   if (!rl.allowed) return rateLimitResponse(rl, 'Too many requests. Please wait before categorizing again.');
 
+  const supabase = createServiceClient();
+
   // Fetch uncategorized tweets with rich fields
   const { data: tweets, error: tweetsErr } = await supabase
     .from('tweets')
     .select('id, content, author_handle, content_type, image_urls, article_url, article_title, article_description, article_body, thread_content')
+    .eq('user_id', user.id)
     .is('collection_id', null)
     .order('captured_at', { ascending: false })
     .limit(50);
@@ -41,146 +43,22 @@ export async function POST(request: Request) {
     return Response.json({ categorized: 0 });
   }
 
-  // Run categorization synchronously so it completes before the function exits
-  const result = await categorizeTweets(
-    tweets as {
-      id: string; content: string; author_handle: string;
-      content_type?: string; image_urls?: string[];
-      article_url?: string | null; article_title?: string | null; article_description?: string | null;
-      article_body?: string | null;
-      thread_content?: { content: string }[] | null;
-    }[],
-    user.id
-  );
-
-  return Response.json(result);
-}
-
-async function categorizeTweets(
-  tweets: {
-    id: string; content: string; author_handle: string;
-    content_type?: string; image_urls?: string[];
-    article_url?: string | null; article_title?: string | null; article_description?: string | null;
-    article_body?: string | null;
-    thread_content?: { content: string }[] | null;
-  }[],
-  userId: string
-): Promise<{ categorized: number; errors: number }> {
   let categorized = 0;
   let errors = 0;
 
   try {
-    const supabase = createServiceClient();
+    const result = await categorizeTweetBatch(supabase, user.id, tweets, {
+      scrapeArticles: true,
+    });
 
-    // Fetch user's themes so AI classifies into the user's taxonomy
-    const { data: themes } = await supabase
-      .from('themes')
-      .select('name')
-      .eq('user_id', userId)
-      .order('name');
-
-    const userThemeNames = (themes ?? []).map((t: { name: string }) => t.name);
-
-    // Fetch existing collections
-    const { data: collections } = await supabase
-      .from('collections')
-      .select('id, name')
-      .eq('user_id', userId);
-
-    const collectionNames = (collections ?? []).map((c: { name: string }) => c.name);
-    const collectionMap = new Map(
-      (collections ?? []).map((c: { id: string; name: string }) => [c.name.toLowerCase(), c.id])
-    );
-
-    const affectedCollectionIds = new Set<string>();
-
-    // Process tweets sequentially to avoid rate limits on free AI tiers
-    for (const tweet of tweets) {
-      try {
-        // Scrape article body if this is an article tweet without cached body
-        if (tweet.content_type === 'article' && tweet.article_url && !tweet.article_body) {
-          const body = await scrapeArticleBody(tweet.article_url);
-          if (body) {
-            tweet.article_body = body;
-            await supabase
-              .from('tweets')
-              .update({ article_body: body })
-              .eq('id', tweet.id);
-            console.log(`[AI] Scraped article body for tweet ${tweet.id} (${body.length} chars)`);
-          }
-        }
-
-        const result = await aiRouter.categorize(tweet, collectionNames, userId, userThemeNames);
-        if (!result) {
-          errors++;
-          continue;
-        }
-
-        // AI signalled no good match — leave tweet uncategorized
-        if (result.theme_name === '__uncategorized__') {
-          console.log(`[AI] Tweet ${tweet.id} → uncategorized (no matching theme)`);
-          continue;
-        }
-
-        // Resolve or create collection
-        let collectionId = collectionMap.get(result.collection_name.toLowerCase());
-
-        if (!collectionId) {
-          const { data, error } = await supabase
-            .from('collections')
-            .insert({ user_id: userId, name: result.collection_name, type: 'topic' })
-            .select('id')
-            .single();
-
-          if (error) {
-            const { data: fallback } = await supabase
-              .from('collections')
-              .select('id')
-              .eq('user_id', userId)
-              .ilike('name', result.collection_name)
-              .single();
-
-            if (fallback) {
-              collectionId = fallback.id;
-            } else {
-              console.error(`[AI] Failed to create collection "${result.collection_name}":`, error.message);
-              errors++;
-              continue;
-            }
-          } else {
-            collectionId = data.id;
-            collectionMap.set(result.collection_name.toLowerCase(), data.id);
-            // Also add to collectionNames so subsequent AI calls see it
-            collectionNames.push(result.collection_name);
-            console.log(`[AI] Created collection "${result.collection_name}" (${data.id})`);
-          }
-        }
-
-        const { error: updateErr } = await supabase
-          .from('tweets')
-          .update({ collection_id: collectionId, ai_summary: result.summary })
-          .eq('id', tweet.id);
-
-        if (updateErr) {
-          console.error(`[AI] Failed to update tweet ${tweet.id}:`, updateErr.message);
-          errors++;
-          continue;
-        }
-
-        console.log(`[AI] Tweet ${tweet.id} → collection "${result.collection_name}" via ${result.provider}`);
-        affectedCollectionIds.add(collectionId!);
-        categorized++;
-      } catch (err) {
-        console.error(`[AI] Error categorizing tweet ${tweet.id}:`, err);
-        errors++;
-      }
-    }
+    categorized = result.categorized;
+    errors = result.errors;
 
     // Regenerate documents for all affected collections
-    if (affectedCollectionIds.size > 0) {
+    if (result.affectedCollectionIds.size > 0) {
       await Promise.allSettled(
-        [...affectedCollectionIds].map((id) =>
-          regenerateCollectionDocument(id, userId, supabase)
+        [...result.affectedCollectionIds].map((id) =>
+          regenerateCollectionDocument(id, user.id, supabase)
         )
       );
     }
@@ -188,5 +66,5 @@ async function categorizeTweets(
     console.error('[AI] Categorization failed:', err);
   }
 
-  return { categorized, errors };
+  return Response.json({ categorized, errors });
 }

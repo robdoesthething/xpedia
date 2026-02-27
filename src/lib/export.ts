@@ -1,12 +1,5 @@
 import type { Collection, Tweet } from '@/types/database';
-
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
+import { formatDate } from '@/lib/utils';
 
 export function generateCollectionMarkdown(collection: Collection, tweets: Tweet[]): string {
   const lines: string[] = [];

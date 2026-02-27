@@ -7,13 +7,20 @@ export default function SettingsClient() {
   const router = useRouter();
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   async function handleReset() {
     setResetting(true);
+    setResetError(null);
+    let res: Response;
     try {
-      await fetch('/api/corpus/reset', { method: 'POST' });
+      res = await fetch('/api/corpus/reset', { method: 'POST' });
     } finally {
       setResetting(false);
+    }
+    if (!res!.ok) {
+      setResetError('Failed to reset. Please try again.');
+      return;
     }
     setShowResetConfirm(false);
     // Onboarding modal will show automatically after redirect (onboarding_completed = false)
@@ -53,7 +60,7 @@ export default function SettingsClient() {
             </p>
             <div className="flex gap-3">
               <button
-                onClick={() => setShowResetConfirm(false)}
+                onClick={() => { setShowResetConfirm(false); setResetError(null); }}
                 className="flex-1 border border-seam text-mist font-mono text-xs tracking-widest uppercase py-2 hover:text-parchment hover:border-parchment/30 transition-colors"
               >
                 Cancel
@@ -66,6 +73,7 @@ export default function SettingsClient() {
                 {resetting ? 'Resetting...' : 'Reset'}
               </button>
             </div>
+            {resetError && <p className="text-red-500 text-sm mt-3">{resetError}</p>}
           </div>
         </div>
       )}

@@ -1,13 +1,6 @@
 import Link from 'next/link';
 import type { Collection } from '@/types/database';
-
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
+import { formatDate } from '@/lib/utils';
 
 export default function CollectionCard({ collection }: { collection: Collection }) {
   return (

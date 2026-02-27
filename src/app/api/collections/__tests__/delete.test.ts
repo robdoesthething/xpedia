@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import type { requireUser } from '@/lib/supabase/server';
 
 vi.mock('@/lib/supabase/server', () => ({
   requireUser: vi.fn(),
@@ -43,8 +44,7 @@ describe('DELETE /api/collections/[id]', () => {
           delete: mockDelete,
         })),
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof requireUser>>);
 
     const { DELETE } = await import('../[id]/route');
     const req = new NextRequest('http://localhost/api/collections/abc', { method: 'DELETE' });

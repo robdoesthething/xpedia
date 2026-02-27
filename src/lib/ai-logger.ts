@@ -27,7 +27,7 @@ export function logAiCall(params: {
   };
 
   supabase
-    .from('ai_calls' as string)
+    .from('ai_calls' as unknown as string)
     .insert(payload)
     .then(({ error }) => {
       if (error) console.error('[AI Logger] Failed to log call:', error.message);

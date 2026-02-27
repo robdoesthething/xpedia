@@ -25,6 +25,7 @@ export default function InboxClient({ tweets: initialTweets, collections, isPro 
   const [tweets, setTweets] = useState(initialTweets);
   const [assigning, setAssigning] = useState<string | null>(null);
   const [sorting, setSorting] = useState(false);
+  const [sortError, setSortError] = useState<string | null>(null);
 
   async function assignTweet(tweetId: string, collectionId: string) {
     if (!collectionId) return;
@@ -43,10 +44,13 @@ export default function InboxClient({ tweets: initialTweets, collections, isPro 
 
   async function handleSortAll() {
     setSorting(true);
+    setSortError(null);
     try {
       const res = await fetch('/api/ai/sort-inbox', { method: 'POST' });
       if (res.ok) {
         router.refresh();
+      } else {
+        setSortError('Failed to sort. Please try again.');
       }
     } finally {
       setSorting(false);
@@ -63,7 +67,7 @@ export default function InboxClient({ tweets: initialTweets, collections, isPro 
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-end">
+      <div className="mb-6 flex flex-col items-end gap-1">
         <ProLock isPro={isPro} reason="feature">
           <button
             onClick={handleSortAll}
@@ -73,6 +77,7 @@ export default function InboxClient({ tweets: initialTweets, collections, isPro 
             {sorting ? 'Sorting...' : '✦ AI Sort All'}
           </button>
         </ProLock>
+        {sortError && <span className="text-red-500 text-sm">{sortError}</span>}
       </div>
 
       <div className="space-y-2">

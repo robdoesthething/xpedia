@@ -73,7 +73,8 @@ export async function PATCH(
   const { error: updateErr } = await supabase
     .from('tweets')
     .update({ collection_id: body.collection_id })
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', user.id);
 
   if (updateErr) {
     console.error('[DB] Failed to move tweet:', updateErr.message);
@@ -135,7 +136,8 @@ export async function DELETE(
   const { error: deleteErr } = await supabase
     .from('tweets')
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', user.id);
 
   if (deleteErr) {
     console.error('[DB] Failed to delete tweet:', deleteErr.message);

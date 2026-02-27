@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import type { requireUser } from '@/lib/supabase/server';
 
 vi.mock('@/lib/supabase/server', () => ({ requireUser: vi.fn() }));
 vi.mock('@/lib/csrf', () => ({ validateOrigin: vi.fn(() => true), csrfForbidden: vi.fn() }));
@@ -31,8 +32,7 @@ describe('POST /api/corpus/reset', () => {
     vi.mocked(requireUser).mockResolvedValue({
       user: { id: 'user-1' },
       supabase: { from: vi.fn(() => mockChain) },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof requireUser>>);
 
     const { POST } = await import('../reset/route');
     const req = new NextRequest('http://localhost/api/corpus/reset', { method: 'POST' });

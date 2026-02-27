@@ -3,15 +3,21 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const tabs = [
-  { label: 'Collections', href: '/dashboard' },
-  { label: 'Sources', href: '/dashboard/tweets' },
-  { label: 'Users', href: '/dashboard/users' },
-  { label: 'Admin', href: '/dashboard/admin' },
+const allTabs = [
+  { label: 'Collections', href: '/dashboard', adminOnly: false },
+  { label: 'Sources', href: '/dashboard/tweets', adminOnly: false },
+  { label: 'Users', href: '/dashboard/users', adminOnly: true },
+  { label: 'Admin', href: '/dashboard/admin', adminOnly: true },
 ] as const;
 
-export default function DashboardTabs() {
+interface DashboardTabsProps {
+  isAdmin?: boolean;
+}
+
+export default function DashboardTabs({ isAdmin }: DashboardTabsProps) {
   const pathname = usePathname();
+
+  const tabs = allTabs.filter((tab) => !tab.adminOnly || isAdmin);
 
   return (
     <div className="flex gap-6">

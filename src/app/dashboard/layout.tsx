@@ -7,10 +7,7 @@ import UpgradeBanner from '@/components/UpgradeBanner';
 import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import type { Collection, Theme } from '@/types/database';
-
-interface ThemeWithCollections extends Theme {
-  collections: Collection[];
-}
+import { groupCollectionsByTheme } from '@/lib/utils';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -23,6 +20,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const showOnboarding = profile ? !profile.onboarding_completed : false;
   const isPro = profile?.plan === 'pro';
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const isAdmin = Boolean(adminEmail && user?.email === adminEmail);
 
   // Fetch all collections with their theme info in one query
   const { data: collections, error } = await supabase
@@ -36,20 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const allCollections = collections ?? [];
 
   // Build theme → collections map
-  const themeMap = new Map<string, ThemeWithCollections>();
-  const uncategorized: Collection[] = [];
-
-  for (const col of allCollections) {
-    const theme = (col as Collection & { themes: Theme | null }).themes;
-    if (theme && col.theme_id) {
-      if (!themeMap.has(theme.id)) {
-        themeMap.set(theme.id, { ...theme, collections: [] });
-      }
-      themeMap.get(theme.id)!.collections.push(col);
-    } else {
-      uncategorized.push(col);
-    }
-  }
+  const { themeMap, uncategorized } = groupCollectionsByTheme(allCollections);
 
   const themes = Array.from(themeMap.values()).sort((a, b) =>
     a.name.localeCompare(b.name)
@@ -65,7 +51,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="min-h-screen bg-void">
       <Navbar />
       <div className="flex items-center justify-between border-b border-seam bg-ink px-6">
-        <DashboardTabs />
+        <DashboardTabs isAdmin={isAdmin} />
         <SearchBar />
       </div>
       <div className="flex">

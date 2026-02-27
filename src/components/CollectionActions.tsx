@@ -1,6 +1,6 @@
 'use client';
 
-import { useReducer, useEffect } from 'react';
+import { useReducer, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ConfirmDeleteBar from '@/components/ConfirmDeleteBar';
 
@@ -74,6 +74,8 @@ export default function CollectionActions({
   initialThemeId: string | null;
 }) {
   const router = useRouter();
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [state, dispatch] = useReducer(reducer, {
     mode: 'idle',
     name: initialName,
@@ -94,6 +96,7 @@ export default function CollectionActions({
   }, [state.mode]);
 
   async function handleSave() {
+    setSaveError(null);
     dispatch({ type: 'SAVING', value: true });
     const res = await fetch(`/api/collections/${collectionId}`, {
       method: 'PATCH',
@@ -104,16 +107,21 @@ export default function CollectionActions({
     if (res.ok) {
       dispatch({ type: 'SAVE_DONE' });
       router.refresh();
+    } else {
+      setSaveError('Failed to save. Please try again.');
     }
   }
 
   async function handleDelete() {
+    setDeleteError(null);
     dispatch({ type: 'DELETING', value: true });
     const res = await fetch(`/api/collections/${collectionId}`, { method: 'DELETE' });
     dispatch({ type: 'DELETING', value: false });
     if (res.ok) {
       router.push('/dashboard');
       router.refresh();
+    } else {
+      setDeleteError('Failed to delete. Please try again.');
     }
   }
 
@@ -126,7 +134,8 @@ export default function CollectionActions({
 
   if (state.mode === 'editing') {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col items-end gap-1">
+        <div className="flex items-center gap-2">
         <input
           type="text"
           value={state.name}
@@ -160,11 +169,13 @@ export default function CollectionActions({
           {state.saving ? 'Saving...' : 'Save'}
         </button>
         <button
-          onClick={() => dispatch({ type: 'CANCEL_EDIT', initialName, initialType, initialThemeId })}
+          onClick={() => { dispatch({ type: 'CANCEL_EDIT', initialName, initialType, initialThemeId }); setSaveError(null); }}
           className="font-mono text-xs tracking-widest text-shadow uppercase hover:text-mist transition-colors px-2 py-1.5"
         >
           Cancel
         </button>
+        </div>
+        {saveError && <span className="text-red-500 text-sm">{saveError}</span>}
       </div>
     );
   }
@@ -174,8 +185,9 @@ export default function CollectionActions({
       <ConfirmDeleteBar
         message="Delete? Items will become uncategorized."
         onConfirm={handleDelete}
-        onCancel={() => dispatch({ type: 'CANCEL_DELETE' })}
+        onCancel={() => { dispatch({ type: 'CANCEL_DELETE' }); setDeleteError(null); }}
         loading={state.deleting}
+        error={deleteError}
       />
     );
   }

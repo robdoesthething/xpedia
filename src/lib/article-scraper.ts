@@ -8,11 +8,58 @@ const MAX_BODY_CHARS = 2000;
 const FETCH_TIMEOUT_MS = 8000;
 
 /**
+ * Validate that a URL is safe to fetch from the server side.
+ *
+ * Blocks:
+ *  - Malformed URLs
+ *  - Non-HTTP(S) protocols
+ *  - Private / loopback / link-local IP ranges (SSRF prevention)
+ */
+export function isUrlSafe(url: string): boolean {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return false;
+    }
+
+    // Only allow http and https
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return false;
+    }
+
+    const hostname = parsed.hostname.toLowerCase();
+
+    // IPv6 loopback
+    if (hostname === '::1' || hostname === '[::1]') return false;
+
+    // Exact string matches
+    if (hostname === 'localhost' || hostname === '0.0.0.0') return false;
+
+    // Parse dotted-decimal IPv4 for range checks
+    const ipv4Match = hostname.match(
+        /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/,
+    );
+    if (ipv4Match) {
+        const [, a, b] = ipv4Match.map(Number);
+
+        if (a === 127) return false;                          // 127.x.x.x  loopback
+        if (a === 10) return false;                           // 10.x.x.x   private
+        if (a === 172 && b >= 16 && b <= 31) return false;   // 172.16-31.x.x private
+        if (a === 192 && b === 168) return false;             // 192.168.x.x private
+        if (a === 169 && b === 254) return false;             // 169.254.x.x link-local / metadata
+        if (a === 0) return false;                            // 0.x.x.x    "this" network
+    }
+
+    return true;
+}
+
+/**
  * Scrape the body text from an article URL.
  * Returns null on any failure (timeout, paywall, 404, etc.).
  */
 export async function scrapeArticleBody(url: string): Promise<string | null> {
-    if (!url || !url.startsWith('http')) return null;
+    if (!url || !isUrlSafe(url)) return null;
 
     try {
         const controller = new AbortController();

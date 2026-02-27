@@ -79,6 +79,10 @@ export interface CapturedTweet {
   thread_content?: ThreadTweet[];
 }
 
+export interface ThemeWithCollections extends Theme {
+  collections: Collection[];
+}
+
 export interface ThemeDigest {
   id: string;
   theme_id: string;

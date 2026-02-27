@@ -1,5 +1,6 @@
 import { requireUser } from '@/lib/supabase/server';
 import { aiRouter } from '@/lib/ai-router';
+import { sanitizeForPrompt } from '@/lib/sanitize';
 
 /**
  * GET /api/ai/suggest-categories
@@ -33,7 +34,7 @@ export async function GET() {
     return Response.json({ suggestions: [] });
   }
 
-  const sampleContent = tweets.map((t: { content: string }) => t.content).join('\n---\n');
+  const sampleContent = tweets.map((t: { content: string }) => sanitizeForPrompt(t.content)).join('\n---\n');
   const suggestions = await aiRouter.suggestCategories(sampleContent, user.id);
 
   return Response.json({ suggestions });
