@@ -192,7 +192,7 @@ async function callProvider(provider, tweetContent) {
 }
 
 // ── Quality scoring heuristics ───────────────────────────────────────────────
-function scoreResult(result, tweetId) {
+function scoreResult(result) {
     if (!result.jsonValid) return { total: 0, breakdown: 'INVALID JSON' };
 
     let score = 0;
@@ -262,7 +262,6 @@ async function main() {
     console.log('╚══════════════════════════════════════════════════════════════╝');
     console.log();
 
-    const allResults = {};
     const summaryRows = [];
 
     for (const provider of PROVIDERS) {
@@ -294,7 +293,7 @@ async function main() {
                 continue;
             }
 
-            const quality = scoreResult(result, tweet.id);
+            const quality = scoreResult(result);
 
             console.log(`     ⏱  Latency: ${result.latencyMs}ms`);
             console.log(`     📊 Tokens: ${result.tokensIn} in / ${result.tokensOut} out`);
