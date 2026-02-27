@@ -316,7 +316,7 @@ export default async function LandingPage() {
           href={ctaHref}
           className="inline-flex items-center gap-2 bg-coral text-white font-sans text-sm font-semibold px-8 py-4 rounded-lg hover:bg-coral-bright active:scale-[0.98] transition-all"
         >
-          {ctaLabel} — free forever →
+          {ctaLabel}{!user && ' — free forever'} →
         </Link>
       </section>
 
