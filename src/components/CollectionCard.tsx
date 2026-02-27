@@ -13,10 +13,12 @@ export default function CollectionCard({ collection }: { collection: Collection 
   return (
     <Link
       href={`/dashboard/collection/${collection.id}`}
-      className="block border border-seam bg-ink p-5 transition-colors hover:border-gold/40 hover:bg-quill"
+      className="card block border border-seam bg-ink p-5 rounded-xl transition-colors hover:border-gold/40 hover:bg-quill"
     >
       <div className="flex items-start justify-between gap-2">
-        <h3 className="font-serif text-lg leading-snug text-parchment">{collection.name}</h3>
+        <h3 className="font-serif font-semibold text-lg leading-snug text-parchment">
+          {collection.name}
+        </h3>
         <span className="shrink-0 font-mono text-xs tracking-widest text-shadow uppercase mt-1">
           {collection.type}
         </span>
