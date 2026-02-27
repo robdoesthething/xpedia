@@ -95,14 +95,51 @@ body {
   color: var(--app-parchment);
 }
 
+/* Gradient text utility */
+.gradient-text {
+  background: linear-gradient(135deg, #5B5FFA 0%, #a855f7 50%, #FF6E4A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Shimmer CTA button */
+@keyframes shimmer-sweep {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.btn-shimmer {
+  background: linear-gradient(
+    110deg,
+    #FF6E4A 0%,
+    #FF6E4A 35%,
+    #ffb399 50%,
+    #FF6E4A 65%,
+    #FF6E4A 100%
+  );
+  background-size: 250% auto;
+  transition: background-position 0.5s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-shimmer:hover {
+  background-position: right center;
+  box-shadow: 0 4px 24px rgba(255, 110, 74, 0.50), 0 1px 6px rgba(255, 110, 74, 0.30);
+  transform: translateY(-1px);
+}
+
+.btn-shimmer:active {
+  transform: scale(0.98);
+}
+
 /* Card shadow + hover lift utility */
 .card {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 20px rgba(91, 95, 250, 0.05);
   border-radius: 12px;
-  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 8px 32px rgba(91, 95, 250, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.09), 0 16px 48px rgba(91, 95, 250, 0.20);
 }

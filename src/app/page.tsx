@@ -21,7 +21,7 @@ export default async function LandingPage() {
           <ThemeToggle />
           <Link
             href={ctaHref}
-            className="inline-flex items-center gap-1.5 bg-coral text-white font-sans text-sm font-semibold px-4 py-2 rounded-lg hover:bg-coral-bright transition-colors"
+            className="btn-shimmer inline-flex items-center gap-1.5 text-white font-sans text-sm font-semibold px-4 py-2 rounded-lg"
           >
             {ctaLabel} →
           </Link>
@@ -35,8 +35,9 @@ export default async function LandingPage() {
           className="pointer-events-none absolute inset-0"
           style={{
             background: [
-              'radial-gradient(ellipse 700px 450px at 85% -5%, rgba(91,95,250,0.13) 0%, transparent 70%)',
-              'radial-gradient(ellipse 550px 550px at -5% 110%, rgba(124,58,237,0.09) 0%, transparent 70%)',
+              'radial-gradient(ellipse 800px 500px at 90% -10%, rgba(91,95,250,0.25) 0%, transparent 65%)',
+              'radial-gradient(ellipse 600px 600px at -10% 115%, rgba(124,58,237,0.18) 0%, transparent 65%)',
+              'radial-gradient(ellipse 400px 300px at 60% 100%, rgba(255,110,74,0.12) 0%, transparent 60%)',
             ].join(', '),
           }}
         />
@@ -53,7 +54,7 @@ export default async function LandingPage() {
             Turn your bookmarks
             <br />
             into a{' '}
-            <span className="text-gold">knowledge corpus</span>
+            <span className="gradient-text">knowledge corpus</span>
           </h1>
 
           {/* Sub-headline */}
@@ -66,7 +67,7 @@ export default async function LandingPage() {
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link
               href={ctaHref}
-              className="inline-flex items-center gap-2 bg-coral text-white font-sans text-sm font-semibold px-6 py-3 rounded-lg hover:bg-coral-bright active:scale-[0.98] transition-all"
+              className="btn-shimmer inline-flex items-center gap-2 text-white font-sans text-sm font-semibold px-6 py-3 rounded-lg"
             >
               {ctaLabel} <span>→</span>
             </Link>
@@ -104,8 +105,8 @@ export default async function LandingPage() {
             {/* Browser chrome */}
             <div className="flex items-center gap-2 bg-ink border-b border-seam px-4 py-3">
               <div className="flex gap-1.5">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="w-3 h-3 rounded-full bg-seam" />
+                {(['#FF5F57', '#FEBC2E', '#28C840'] as const).map((c) => (
+                  <div key={c} className="w-3 h-3 rounded-full" style={{ backgroundColor: c }} />
                 ))}
               </div>
               <div className="flex-1 mx-4 bg-void rounded px-3 py-1 font-mono text-xs text-shadow truncate">
@@ -159,7 +160,7 @@ export default async function LandingPage() {
             { num: '1', label: 'Person built this' },
           ].map(({ num, label }) => (
             <div key={label}>
-              <div className="font-serif text-4xl font-bold text-parchment">{num}</div>
+              <div className="gradient-text font-serif text-5xl font-bold">{num}</div>
               <div className="mt-1 font-mono text-xs text-shadow uppercase tracking-widest">{label}</div>
             </div>
           ))}
@@ -180,20 +181,23 @@ export default async function LandingPage() {
                 icon: '⚡',
                 title: 'Zero-API capture',
                 desc: 'Chrome extension reads your X bookmarks directly — no API key, no limitations, no waitlist.',
+                iconStyle: { background: 'linear-gradient(135deg, #FF6E4A, #FF9D7E)' },
               },
               {
                 icon: '🧠',
                 title: 'AI categorization',
                 desc: 'Not "Tech" — "React Performance Patterns." Granular, specific topics that actually help you think.',
+                iconStyle: { background: 'linear-gradient(135deg, #5B5FFA, #818CF8)' },
               },
               {
                 icon: '📄',
                 title: 'LLM-ready export',
                 desc: 'Each collection becomes a structured Markdown document you can drop straight into any AI chat.',
+                iconStyle: { background: 'linear-gradient(135deg, #7C3AED, #A78BFA)' },
               },
-            ].map(({ icon, title, desc }) => (
+            ].map(({ icon, title, desc, iconStyle }) => (
               <div key={title} className="card bg-ink border border-seam p-6">
-                <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center text-lg mb-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-4" style={iconStyle}>
                   {icon}
                 </div>
                 <h3 className="font-serif font-semibold text-lg text-parchment mb-2">{title}</h3>
@@ -230,7 +234,7 @@ export default async function LandingPage() {
               },
             ].map(({ n, title, body }) => (
               <div key={n}>
-                <div className="font-serif text-[72px] font-bold text-seam leading-none select-none mb-2">
+                <div className="gradient-text font-serif text-[80px] font-bold leading-none select-none mb-2">
                   {n}
                 </div>
                 <h3 className="font-serif font-semibold text-xl text-parchment mb-3">{title}</h3>
@@ -314,7 +318,7 @@ export default async function LandingPage() {
         </p>
         <Link
           href={ctaHref}
-          className="inline-flex items-center gap-2 bg-coral text-white font-sans text-sm font-semibold px-8 py-4 rounded-lg hover:bg-coral-bright active:scale-[0.98] transition-all"
+          className="btn-shimmer inline-flex items-center gap-2 text-white font-sans text-sm font-semibold px-8 py-4 rounded-lg"
         >
           {ctaLabel}{!user && ' — free forever'} →
         </Link>
