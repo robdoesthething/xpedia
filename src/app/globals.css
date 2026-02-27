@@ -2,14 +2,11 @@
 
 @theme inline {
   /* Typography */
-  --font-serif:  var(--font-cormorant), Georgia, serif;
+  --font-serif:  var(--font-syne), Georgia, serif;
   --font-sans:   var(--font-dm-sans), system-ui, sans-serif;
   --font-mono:   var(--font-jetbrains), 'Courier New', monospace;
 
-  /*
-   * Semantic color tokens — reference CSS custom properties so that
-   * swapping :root vars is all it takes to switch between light and dark.
-   */
+  /* Semantic color tokens */
   --color-void:        var(--app-void);
   --color-ink:         var(--app-ink);
   --color-quill:       var(--app-quill);
@@ -20,38 +17,46 @@
   --color-shadow:      var(--app-shadow);
   --color-gold:        var(--app-gold);
   --color-gold-bright: var(--app-gold-bright);
+  --color-coral:       var(--app-coral);
+  --color-coral-bright: var(--app-coral-bright);
 }
 
 /* ── Light mode (default) ── */
 :root {
-  --app-void:        #f4efe6;   /* warm cream page bg          */
-  --app-ink:         #ffffff;   /* white card surface          */
-  --app-quill:       #f9f5ef;   /* hovered card surface        */
-  --app-seam:        #ddd5c8;   /* warm border                 */
-  --app-veil:        #cbc2b5;   /* stronger border / hover     */
+  --app-void:         #FAFAF8;   /* indigo-tinted cream bg        */
+  --app-ink:          #FFFFFF;   /* white card surface            */
+  --app-quill:        #F4F4FD;   /* indigo-tinted hover           */
+  --app-seam:         #E2E2F0;   /* indigo-tinted border          */
+  --app-veil:         #D0D0E8;   /* stronger border               */
 
-  --app-parchment:   #1a1714;   /* near-black primary text     */
-  --app-mist:        #4a4038;   /* warm dark grey secondary    */
-  --app-shadow:      #7a6e66;   /* medium warm grey tertiary   */
+  --app-parchment:    #0D0E1A;   /* near-black primary text       */
+  --app-mist:         #6B6B8A;   /* secondary text                */
+  --app-shadow:       #9B9BB0;   /* muted text                    */
 
-  --app-gold:        #8a5f1a;   /* dark amber for text / icons */
-  --app-gold-bright: #9d6a1e;   /* hover                       */
+  --app-gold:         #5B5FFA;   /* indigo accent                 */
+  --app-gold-bright:  #4A4EF0;   /* indigo hover                  */
+
+  --app-coral:        #FF6E4A;   /* coral CTA                     */
+  --app-coral-bright: #F05A38;   /* coral hover                   */
 }
 
 /* ── Dark mode ── */
 .dark {
-  --app-void:        #0f0d0b;   /* near-black page bg          */
-  --app-ink:         #1c1916;   /* distinct dark card surface  */
-  --app-quill:       #252119;   /* hovered card surface        */
-  --app-seam:        #3d3730;   /* visible border              */
-  --app-veil:        #4e4840;   /* strong hover border         */
+  --app-void:         #0D0E1A;   /* deep indigo-black bg          */
+  --app-ink:          #161726;   /* dark card surface             */
+  --app-quill:        #1E1F33;   /* hovered card                  */
+  --app-seam:         #2A2B45;   /* visible border                */
+  --app-veil:         #363758;   /* strong border                 */
 
-  --app-parchment:   #f0ece2;   /* bright readable primary     */
-  --app-mist:        #c4bcb2;   /* good secondary contrast     */
-  --app-shadow:      #948880;   /* readable tertiary           */
+  --app-parchment:    #F0F0FF;   /* bright readable primary       */
+  --app-mist:         #9494B8;   /* secondary                     */
+  --app-shadow:       #5A5A7A;   /* muted                         */
 
-  --app-gold:        #c8892a;   /* vibrant amber               */
-  --app-gold-bright: #dfa040;   /* hover                       */
+  --app-gold:         #5B5FFA;   /* same indigo in dark           */
+  --app-gold-bright:  #6A6EFF;   /* lighter indigo hover          */
+
+  --app-coral:        #FF7A5A;   /* slightly lighter coral        */
+  --app-coral-bright: #FF8C6A;   /* coral hover                   */
 }
 
 *, *::before, *::after {
@@ -88,4 +93,16 @@ body {
 ::selection {
   background: color-mix(in srgb, var(--app-gold) 20%, transparent);
   color: var(--app-parchment);
+}
+
+/* Card shadow + hover lift utility */
+.card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 20px rgba(91, 95, 250, 0.05);
+  border-radius: 12px;
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 8px 32px rgba(91, 95, 250, 0.12);
 }
