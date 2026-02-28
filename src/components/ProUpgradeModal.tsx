@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface Props {
   onClose: () => void;
   reason?: 'ai_collection_limit' | 'tweet_count_limit' | 'feature';
@@ -12,11 +14,26 @@ const REASON_TEXT: Record<string, string> = {
 };
 
 export default function ProUpgradeModal({ onClose, reason = 'feature' }: Props) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   async function handleUpgrade() {
-    const res = await fetch('/api/stripe/checkout', { method: 'POST' });
-    if (res.ok) {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/stripe/checkout', { method: 'POST' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? `Request failed (${res.status}). Please try again.`);
+        return;
+      }
       const { url } = await res.json();
       if (url) window.location.href = url;
+      else setError('No checkout URL returned. Please try again.');
+    } catch {
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -38,10 +55,12 @@ export default function ProUpgradeModal({ onClose, reason = 'feature' }: Props) 
 
         <button
           onClick={handleUpgrade}
-          className="w-full bg-gold text-void font-mono text-sm tracking-widest uppercase px-4 py-3 hover:bg-gold/90 transition-colors mb-3"
+          disabled={loading}
+          className="w-full bg-gold text-void font-mono text-sm tracking-widest uppercase px-4 py-3 hover:bg-gold/90 transition-colors mb-3 disabled:opacity-50"
         >
-          Upgrade — one-time payment
+          {loading ? 'Redirecting…' : 'Upgrade — one-time payment'}
         </button>
+        {error && <p className="text-red-400 text-xs font-mono mb-3">{error}</p>}
         <button
           onClick={onClose}
           className="font-mono text-xs text-shadow hover:text-mist transition-colors"

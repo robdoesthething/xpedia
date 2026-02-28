@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,14 +21,14 @@ export default function LoginPage() {
     try {
       const supabase = createClient();
 
-      const { error } = isSignUp
-        ? await supabase.auth.signUp({ email, password })
-        : await supabase.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        setError(error.message);
-        setLoading(false);
-        return;
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) { setError(error.message); setLoading(false); return; }
+        // If session is null, email confirmation is required
+        if (!data.session) { setEmailSent(true); setLoading(false); return; }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) { setError(error.message); setLoading(false); return; }
       }
 
       router.push('/dashboard');
@@ -36,6 +37,28 @@ export default function LoginPage() {
       setError(err instanceof Error ? err.message : 'Unable to reach auth server. Please try again.');
       setLoading(false);
     }
+  }
+
+  if (emailSent) {
+    return (
+      <div className="min-h-screen bg-void flex items-center justify-center px-6">
+        <div className="w-full max-w-sm text-center">
+          <span className="font-mono text-xs tracking-[0.3em] text-gold uppercase">Xpedia</span>
+          <div className="mt-8 text-4xl mb-6">📬</div>
+          <h1 className="font-serif text-3xl text-parchment mb-3">Check your email</h1>
+          <p className="text-sm text-mist leading-relaxed mb-8">
+            We sent a confirmation link to <strong className="text-parchment">{email}</strong>.
+            Click it to activate your account, then come back to sign in.
+          </p>
+          <button
+            onClick={() => { setEmailSent(false); setIsSignUp(false); }}
+            className="font-mono text-xs text-shadow hover:text-mist transition-colors"
+          >
+            Back to sign in
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
